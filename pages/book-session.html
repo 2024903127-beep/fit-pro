@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Book a Session — FitPro</title>
+<link rel="stylesheet" href="../assets/css/ds.css">
+<script src="https://checkout.razorpay.com/v1/checkout.js" async></script>
+<style>
+/* ── NAV ──────────────────────────────── */
+.book-nav { position:sticky; top:0; z-index:100; background:rgba(8,8,8,.95); backdrop-filter:blur(20px); border-bottom:1px solid var(--wire); padding:14px 0 }
+.book-nav-in { display:flex; align-items:center; justify-content:space-between }
+.book-logo { font-family:var(--fd); font-size:1.3rem; font-weight:800; display:flex; align-items:center; gap:10px; color:var(--txt-1) }
+.book-logo-m { width:32px; height:32px; background:var(--brand); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:.9rem; flex-shrink:0 }
+
+/* ── STEPPER ──────────────────────────── */
+.stepper { display:flex; align-items:center; max-width:540px; margin:40px auto 48px; padding:0 20px }
+.snode { display:flex; flex-direction:column; align-items:center; gap:5px; flex:1; position:relative }
+.snode::after { content:''; position:absolute; top:15px; left:52%; width:100%; height:2px; background:var(--wire-md); z-index:0; transition:background .4s var(--ease) }
+.snode:last-child::after { display:none }
+.snode.done::after { background:var(--mint) }
+.sc { width:30px; height:30px; border-radius:50%; border:2px solid var(--wire-md); background:var(--ink-2); display:flex; align-items:center; justify-content:center; font-size:.75rem; font-weight:700; z-index:1; color:var(--txt-3); transition:all .35s var(--ease); flex-shrink:0 }
+.snode.on   .sc { border-color:var(--brand); background:var(--brand-dim); color:var(--brand) }
+.snode.done .sc { border-color:var(--mint);  background:var(--mint);      color:#000 }
+.slbl { font-size:.62rem; font-weight:700; color:var(--txt-3); text-align:center; text-transform:uppercase; letter-spacing:.06em; white-space:nowrap }
+.snode.on   .slbl { color:var(--brand) }
+.snode.done .slbl { color:var(--mint)  }
+
+/* ── PANELS ───────────────────────────── */
+.bwrap  { max-width:960px; margin:0 auto; padding:0 clamp(14px,4vw,32px) 80px }
+.panel  { display:none }
+.panel.on { display:block }
+
+/* ── TRAINER HERO ─────────────────────── */
+.t-hero { background:var(--ink-2); border:1px solid var(--wire); border-radius:var(--r-2xl); padding:28px; display:flex; gap:20px; align-items:flex-start; margin-bottom:20px }
+.t-hero-av { width:100px; height:100px; border-radius:var(--r-xl); display:flex; align-items:center; justify-content:center; font-family:var(--fd); font-size:2.5rem; font-weight:800; flex-shrink:0 }
+.t-hero-name { font-family:var(--fd); font-size:1.8rem; font-weight:800; line-height:1; margin-bottom:6px }
+.t-hero-spec { font-size:.88rem; color:var(--txt-2); margin-bottom:12px }
+.t-hero-stats { display:flex; gap:20px; flex-wrap:wrap }
+.ths-val { font-family:var(--fd); font-size:1.3rem; font-weight:700 }
+.ths-lbl { font-size:.68rem; color:var(--txt-3); text-transform:uppercase; letter-spacing:.06em; font-weight:600 }
+
+/* ── REVIEW CARD ──────────────────────── */
+.review-card { padding:16px; background:var(--ink-3); border-radius:var(--r-lg) }
+.review-q { font-size:.875rem; color:var(--txt-1); line-height:1.7; margin-bottom:14px; font-style:italic; padding-left:18px; position:relative }
+.review-q::before { content:'"'; position:absolute; left:0; top:-4px; font-family:var(--fd); font-size:2rem; color:var(--brand); line-height:1 }
+
+/* ── SESSION TYPE CARDS ───────────────── */
+.stype-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:24px }
+.stype-card { border:2px solid var(--wire-md); border-radius:var(--r-xl); padding:24px; text-align:center; cursor:pointer; transition:all var(--dur); position:relative; background:transparent; -webkit-tap-highlight-color:transparent }
+.stype-card:hover { border-color:var(--wire-hi); background:var(--wire) }
+.stype-card.on { border-color:var(--brand); background:var(--brand-dim) }
+.stype-card.on::after { content:'✓'; position:absolute; top:12px; right:14px; width:22px; height:22px; background:var(--brand); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:.72rem; font-weight:700; color:#fff }
+.stype-ico { font-size:2.5rem; margin-bottom:10px; display:block }
+.stype-title { font-family:var(--fd); font-size:1rem; font-weight:700; margin-bottom:4px }
+.stype-desc { font-size:.78rem; color:var(--txt-3); line-height:1.55 }
+.stype-price { margin-top:12px; font-family:var(--fd); font-weight:700; color:var(--mint); font-size:1rem }
+
+/* ── DATE SCROLL ──────────────────────── */
+.date-scroll { display:flex; gap:10px; overflow-x:auto; padding-bottom:6px; scrollbar-width:none; margin-bottom:28px }
+.date-scroll::-webkit-scrollbar { display:none }
+.date-chip { flex-shrink:0; width:62px; text-align:center; padding:12px 6px; border-radius:var(--r-md); border:1px solid var(--wire-md); cursor:pointer; transition:all var(--df); background:transparent; -webkit-tap-highlight-color:transparent }
+.date-chip:hover { border-color:var(--wire-hi) }
+.date-chip.on { border-color:var(--brand); background:var(--brand-dim) }
+.date-chip.off { opacity:.3; pointer-events:none }
+.dc-day { font-size:.68rem; color:var(--txt-3); font-weight:700; text-transform:uppercase }
+.dc-num { font-family:var(--fd); font-size:1.5rem; font-weight:800; line-height:1 }
+.dc-mon { font-size:.65rem; color:var(--txt-3); margin-top:2px }
+
+/* ── TIME GRID ────────────────────────── */
+.time-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(96px,1fr)); gap:10px; margin-bottom:28px }
+.tslot { padding:11px; border-radius:var(--r-sm); border:1px solid var(--wire-md); text-align:center; cursor:pointer; transition:all var(--df); font-size:.85rem; font-weight:600; background:transparent; -webkit-tap-highlight-color:transparent }
+.tslot:hover { border-color:var(--brand); color:var(--brand) }
+.tslot.on { background:var(--brand); border-color:var(--brand); color:#fff }
+.tslot.booked { background:var(--ink-3); color:var(--txt-3); cursor:not-allowed; opacity:.4; text-decoration:line-through }
+
+/* ── ORDER CARD ───────────────────────── */
+.order-card { background:linear-gradient(135deg,rgba(255,69,0,.07),var(--ink-2)); border:1px solid rgba(255,69,0,.18); border-radius:var(--r-2xl); padding:26px }
+.order-row { display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--wire); font-size:.875rem }
+.order-row:last-child { border-bottom:none; font-size:1rem; font-weight:700; padding-top:14px; margin-top:4px }
+.order-lbl { color:var(--txt-2) }
+
+/* ── PAYMENT METHOD ───────────────────── */
+.pay-opt { display:flex; align-items:center; gap:14px; padding:16px; border:2px solid var(--wire-md); border-radius:var(--r-lg); cursor:pointer; transition:all var(--df); margin-bottom:10px }
+.pay-opt.on { border-color:var(--brand); background:var(--brand-dim) }
+.pay-opt input[type=radio] { accent-color:var(--brand) }
+
+/* ── SUCCESS ──────────────────────────── */
+.success-wrap { text-align:center; padding:40px 20px; animation:fadeUp .5s var(--ease) both }
+.suc-icon { font-size:5rem; display:block; margin-bottom:16px; animation:float 3s ease-in-out infinite }
+.suc-title { font-family:var(--fd); font-size:2.5rem; font-weight:800; margin-bottom:8px }
+
+/* ── CONFETTI ─────────────────────────── */
+@keyframes confFall { 0%{ transform:translateY(-20px) rotate(0); opacity:1 } 100%{ transform:translateY(100vh) rotate(720deg); opacity:0 } }
+.conf-wrap { position:fixed; inset:0; pointer-events:none; z-index:9999; overflow:hidden }
+
+/* ── WALLET BAR ───────────────────────── */
+.wallet-bar { background:var(--ink-2); border:1px solid var(--wire); border-radius:var(--r-xl); padding:14px 20px; display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; flex-wrap:wrap; gap:12px }
+
+/* RESPONSIVE */
+@media(max-width:600px) {
+  .t-hero { flex-direction:column; align-items:center; text-align:center }
+  .t-hero-stats { justify-content:center }
+  .stype-grid { grid-template-columns:1fr }
+  .time-grid { grid-template-columns:repeat(3,1fr) }
+  .stepper { margin:24px auto 32px }
+  .snode-label { display:none }
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="book-nav">
+  <div class="wrap book-nav-in">
+    <a href="../index.html" class="book-logo"><div class="book-logo-m">💪</div>FitPro</a>
+    <div style="display:flex;align-items:center;gap:12px">
+      <div style="font-size:.82rem;color:var(--txt-2)">Wallet: 🪙 <span class="coin-bal" style="color:var(--gold);font-weight:700">150</span></div>
+      <a href="learner-dashboard.html" class="btn btn-ghost btn-sm">← Dashboard</a>
+      <button class="btn btn-icon btn-ghost" onclick="Theme.toggle()" style="font-size:1rem">🌙</button>
+    </div>
+  </div>
+</nav>
+
+<!-- STEPPER -->
+<div class="wrap">
+  <div class="stepper">
+    <div class="snode on"  id="sn1"><div class="sc" id="sc1">1</div><div class="slbl">Trainer</div></div>
+    <div class="snode"     id="sn2"><div class="sc" id="sc2">2</div><div class="slbl">Type</div></div>
+    <div class="snode"     id="sn3"><div class="sc" id="sc3">3</div><div class="slbl">Schedule</div></div>
+    <div class="snode"     id="sn4"><div class="sc" id="sc4">4</div><div class="slbl">Confirm</div></div>
+    <div class="snode"     id="sn5"><div class="sc" id="sc5">5</div><div class="slbl">Done</div></div>
+  </div>
+</div>
+
+<div class="bwrap">
+
+  <!-- ══════ PANEL 1: TRAINER PROFILE ══════ -->
+  <div class="panel on" id="panel-1">
+    <div class="t-hero">
+      <div class="t-hero-av" id="th-av" style="background:linear-gradient(135deg,#FF4500,#FF6A35)">AS</div>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px">
+          <div class="t-hero-name" id="th-name">Arjun Sharma</div>
+          <span class="badge b-sky">✓ Verified</span>
+          <span class="badge b-gold">★ 4.9 Top Rated</span>
+        </div>
+        <div class="t-hero-spec" id="th-spec">Weight Loss &amp; HIIT · 8 years exp · Delhi</div>
+        <div class="t-hero-stats">
+          <div><div class="ths-val t-gold">★ 4.9</div><div class="ths-lbl">Rating</div></div>
+          <div><div class="ths-val" id="th-reviews">128</div><div class="ths-lbl">Reviews</div></div>
+          <div><div class="ths-val t-brand" id="th-price">₹1,200</div><div class="ths-lbl">Per session</div></div>
+          <div><div class="ths-val" id="th-coins-lbl">🪙 50 coins</div><div class="ths-lbl">Alt. payment</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reviews -->
+    <div class="card card-sm" style="margin-bottom:24px">
+      <div class="fb" style="margin-bottom:16px">
+        <div style="font-family:var(--fd);font-weight:700">Recent Reviews</div>
+        <span class="badge b-gold">★ 4.9 · <span id="th-reviews2">128</span> reviews</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px" id="reviews-list"></div>
+    </div>
+
+    <!-- About -->
+    <div class="card card-sm" style="margin-bottom:24px">
+      <div style="font-family:var(--fd);font-weight:700;margin-bottom:10px">About</div>
+      <p id="th-about" class="t-sm"></p>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:12px" id="th-certs"></div>
+    </div>
+
+    <div style="display:flex;gap:12px;justify-content:flex-end;flex-wrap:wrap">
+      <a href="learner-dashboard.html" class="btn btn-ghost btn-lg">← Back</a>
+      <button class="btn btn-fire btn-lg" onclick="goStep(2)">Continue to Booking →</button>
+    </div>
+  </div>
+
+  <!-- ══════ PANEL 2: SESSION TYPE ══════ -->
+  <div class="panel" id="panel-2">
+    <div class="wallet-bar">
+      <div>
+        <div style="font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--txt-3);margin-bottom:4px">Your Wallet</div>
+        <div style="font-weight:700;font-size:1rem">🪙 <span class="coin-bal">150</span> FitCoins available</div>
+      </div>
+      <button class="btn btn-outline btn-sm" onclick="Modal.open('topup-modal')">+ Top Up</button>
+    </div>
+
+    <div style="font-family:var(--fd);font-size:1.4rem;font-weight:800;margin-bottom:6px">Choose session type</div>
+    <p style="font-size:.875rem;color:var(--txt-2);margin-bottom:20px">Select how you'd like to train</p>
+
+    <div class="stype-grid">
+      <div class="stype-card" id="st-online" onclick="selectType('online')">
+        <span class="stype-ico">📱</span>
+        <div class="stype-title">Online Session</div>
+        <div class="stype-desc">Train from home via Zoom video call. Get your link instantly after booking.</div>
+        <div style="display:flex;justify-content:center;gap:6px;margin-top:10px;flex-wrap:wrap">
+          <span class="tag" style="font-size:.68rem">No travel</span>
+          <span class="tag" style="font-size:.68rem">Flexible timing</span>
+        </div>
+        <div class="stype-price" id="st-coins-online">🪙 50 coins</div>
+      </div>
+      <div class="stype-card" id="st-offline" onclick="selectType('offline')">
+        <span class="stype-ico">🏠</span>
+        <div class="stype-title">Home Visit</div>
+        <div class="stype-desc">Trainer comes to your home or nearby gym with equipment if needed.</div>
+        <div style="display:flex;justify-content:center;gap:6px;margin-top:10px;flex-wrap:wrap">
+          <span class="tag" style="font-size:.68rem">In-person</span>
+          <span class="tag" style="font-size:.68rem">Equipment included</span>
+        </div>
+        <div class="stype-price" id="st-coins-offline">🪙 50 coins</div>
+      </div>
+    </div>
+
+    <!-- Address field (offline only) -->
+    <div id="address-wrap" style="display:none;margin-bottom:20px">
+      <div class="ig">
+        <label>Your Address for Home Visit</label>
+        <input class="input" id="address-input" placeholder="Flat/House No, Street, Area, City — Pincode">
+        <div style="font-size:.72rem;color:var(--txt-3);margin-top:5px">Trainer will confirm serviceability within 30 mins</div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:12px;justify-content:flex-end;flex-wrap:wrap">
+      <button class="btn btn-ghost btn-lg" onclick="goStep(1)">← Back</button>
+      <button class="btn btn-fire btn-lg" onclick="proceedFromType()">Choose Date &amp; Time →</button>
+    </div>
+  </div>
+
+  <!-- ══════ PANEL 3: DATE & TIME ══════ -->
+  <div class="panel" id="panel-3">
+    <div style="font-family:var(--fd);font-size:1.4rem;font-weight:800;margin-bottom:6px">Pick a date</div>
+    <p style="font-size:.875rem;color:var(--txt-2);margin-bottom:16px">Available slots for <span id="date-trainer-name">your trainer</span></p>
+    <div class="date-scroll" id="date-scroll"></div>
+
+    <div style="font-family:var(--fd);font-size:1.2rem;font-weight:700;margin-bottom:8px">Available time slots</div>
+    <p class="t-xs" style="margin-bottom:14px" id="slot-hint">Select a date to see available slots</p>
+    <div class="time-grid" id="time-grid"></div>
+
+    <div style="display:flex;gap:12px;justify-content:flex-end;flex-wrap:wrap;margin-top:8px">
+      <button class="btn btn-ghost btn-lg" onclick="goStep(2)">← Back</button>
+      <button class="btn btn-fire btn-lg" onclick="proceedFromDateTime()">Review Booking →</button>
+    </div>
+  </div>
+
+  <!-- ══════ PANEL 4: CONFIRM ══════ -->
+  <div class="panel" id="panel-4">
+    <div class="g2">
+      <div>
+        <div style="font-family:var(--fd);font-size:1.3rem;font-weight:800;margin-bottom:16px">Booking Summary</div>
+        <div class="order-card" style="margin-bottom:14px">
+          <div class="order-row"><span class="order-lbl">Trainer</span><span style="font-weight:700" id="sum-trainer">—</span></div>
+          <div class="order-row"><span class="order-lbl">Session Type</span><span style="font-weight:700" id="sum-type">—</span></div>
+          <div class="order-row"><span class="order-lbl">Date</span><span style="font-weight:700" id="sum-date">—</span></div>
+          <div class="order-row"><span class="order-lbl">Time</span><span style="font-weight:700" id="sum-time">—</span></div>
+          <div class="order-row"><span class="order-lbl">Duration</span><span style="font-weight:700">60 minutes</span></div>
+          <div class="order-row"><span class="order-lbl">Wallet Balance</span><span style="font-weight:700">🪙 <span class="coin-bal">150</span></span></div>
+          <div class="order-row" style="border-bottom:1px solid var(--wire)"><span class="order-lbl" style="color:var(--brand)">Session Cost</span><span style="color:var(--brand);font-weight:800" id="sum-coins">🪙 50 coins</span></div>
+          <div class="order-row" style="border:none;padding-top:12px"><span class="order-lbl">Remaining after</span><span style="color:var(--mint);font-weight:700" id="sum-remaining">🪙 100 coins</span></div>
+        </div>
+
+        <!-- Zoom preview (online) -->
+        <div id="zoom-preview" style="display:none;padding:16px;background:rgba(56,191,255,.07);border:1px solid rgba(56,191,255,.2);border-radius:var(--r-lg);margin-bottom:10px">
+          <div style="font-weight:700;color:var(--sky);margin-bottom:5px">📹 Zoom link generated on confirmation</div>
+          <div style="font-size:.8rem;color:var(--txt-2)">Meeting ID &amp; password sent to your email instantly.</div>
+        </div>
+
+        <!-- Home visit preview -->
+        <div id="home-preview" style="display:none;padding:16px;background:rgba(0,229,160,.07);border:1px solid rgba(0,229,160,.2);border-radius:var(--r-lg);margin-bottom:10px">
+          <div style="font-weight:700;color:var(--mint);margin-bottom:5px">🏠 Home Visit Confirmed</div>
+          <div style="font-size:.8rem;color:var(--txt-2)" id="home-addr-show">—</div>
+        </div>
+      </div>
+
+      <div>
+        <div style="font-family:var(--fd);font-size:1.3rem;font-weight:800;margin-bottom:16px">Payment Method</div>
+        <label class="pay-opt on" id="pay-coins-opt" onclick="selectPay('coins')">
+          <input type="radio" name="pay" value="coins" checked>
+          <div>
+            <div style="font-weight:700;font-size:.9rem">🪙 Pay with FitCoins</div>
+            <div style="font-size:.78rem;color:var(--txt-2)">Deduct coins from wallet — recommended</div>
+          </div>
+        </label>
+        <label class="pay-opt" id="pay-card-opt" onclick="selectPay('card')">
+          <input type="radio" name="pay" value="card">
+          <div>
+            <div style="font-weight:700;font-size:.9rem">💳 Pay with Razorpay</div>
+            <div style="font-size:.78rem;color:var(--txt-2)" id="card-price-lbl">₹1,200 — Card, UPI, NetBanking</div>
+          </div>
+        </label>
+
+        <div class="ig" style="margin:16px 0">
+          <label>Note for Trainer (optional)</label>
+          <textarea class="input" rows="3" placeholder="Injuries, fitness level, specific goals…" id="booking-note"></textarea>
+        </div>
+
+        <label style="display:flex;align-items:flex-start;gap:10px;font-size:.82rem;color:var(--txt-2);cursor:pointer;margin-bottom:20px">
+          <input type="checkbox" id="terms-check" style="margin-top:3px;accent-color:var(--brand);flex-shrink:0">
+          <span>I agree to the <a href="#" style="color:var(--brand)">Terms of Service</a> and <a href="#" style="color:var(--brand)">Cancellation Policy</a>. Cancellations 24h+ before get 80% refund.</span>
+        </label>
+
+        <button class="btn btn-fire btn-xl btn-full" id="confirm-btn" onclick="confirmBooking()">
+          Confirm Booking 🎯
+        </button>
+        <div style="text-align:center;font-size:.75rem;color:var(--txt-3);margin-top:10px">🔒 Secured by Razorpay &amp; Supabase</div>
+      </div>
+    </div>
+    <div style="margin-top:20px">
+      <button class="btn btn-ghost" onclick="goStep(3)">← Back</button>
+    </div>
+  </div>
+
+  <!-- ══════ PANEL 5: SUCCESS ══════ -->
+  <div class="panel" id="panel-5">
+    <div class="success-wrap" style="max-width:540px;margin:0 auto">
+      <span class="suc-icon">🎉</span>
+      <div class="suc-title">Booking Confirmed!</div>
+      <p style="color:var(--txt-2);margin-bottom:28px;font-size:.95rem">Check your email for details and Zoom link. We'll remind you 1 hour before.</p>
+
+      <div style="background:var(--ink-2);border:1px solid rgba(0,229,160,.25);border-radius:var(--r-2xl);padding:24px;margin-bottom:28px;text-align:left">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px">
+          <div class="av av-lg" id="conf-av" style="background:linear-gradient(135deg,#FF4500,#FF6A35)">AS</div>
+          <div>
+            <div style="font-family:var(--fd);font-size:1.1rem;font-weight:700" id="conf-trainer">—</div>
+            <span class="badge b-mint">✓ Confirmed</span>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px;font-size:.875rem;margin-bottom:16px">
+          <div class="fb"><span style="color:var(--txt-2)">📅 Date</span><strong id="conf-date">—</strong></div>
+          <div class="fb"><span style="color:var(--txt-2)">⏰ Time</span><strong id="conf-time">—</strong></div>
+          <div class="fb"><span style="color:var(--txt-2)">📍 Type</span><strong id="conf-type">—</strong></div>
+          <div class="fb"><span style="color:var(--txt-2)">🪙 Paid</span><strong style="color:var(--brand)" id="conf-coins">50 coins</strong></div>
+          <div class="fb"><span style="color:var(--txt-2)">📋 Booking ID</span><strong style="font-size:.78rem;color:var(--txt-3)" id="conf-id">—</strong></div>
+        </div>
+
+        <!-- Zoom details -->
+        <div id="conf-zoom" style="display:none;padding:14px;background:rgba(56,191,255,.08);border:1px solid rgba(56,191,255,.2);border-radius:var(--r-md)">
+          <div style="font-weight:700;color:var(--sky);margin-bottom:8px">📹 Zoom Meeting</div>
+          <div style="font-size:.82rem;margin-bottom:10px">
+            ID: <strong id="conf-mid">—</strong> · Password: <strong id="conf-mpwd">—</strong>
+          </div>
+          <a id="conf-zoom-link" href="#" target="_blank" class="btn btn-sky btn-sm" style="display:inline-flex">Join Zoom Meeting →</a>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+        <a href="learner-dashboard.html" class="btn btn-fire btn-lg">Go to Dashboard →</a>
+        <a href="https://wa.me/918287034496?text=Hi!%20Just%20booked%20a%20FitPro%20session%20💪%20Excited%20to%20start!" target="_blank" class="btn btn-glass btn-lg">
+          Share on WhatsApp
+        </a>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /bwrap -->
+
+<!-- Top-up modal -->
+<div class="moverlay" id="topup-modal">
+  <div class="modal">
+    <div class="mhead"><div class="mtitle">Top Up FitCoins</div><button class="btn btn-icon btn-ghost" onclick="Modal.close('topup-modal')" style="font-size:1rem">✕</button></div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <button class="btn btn-glass btn-full btn-lg" style="justify-content:space-between" onclick="topUp(499,50)">🪙 50 Coins <span style="color:var(--txt-2)">₹499</span></button>
+      <button class="btn btn-fire btn-full btn-lg" style="justify-content:space-between" onclick="topUp(999,150)">🪙 150 Coins <span>₹999 · Best</span></button>
+      <button class="btn btn-glass btn-full btn-lg" style="justify-content:space-between" onclick="topUp(1999,400)">🪙 400 Coins <span style="color:var(--txt-2)">₹1999</span></button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toast-wrap"></div>
+
+<script src="../assets/js/core.js"></script>
+<script src="../assets/js/supabase.js"></script>
+<script src="../assets/js/zoom.js"></script>
+<script src="../assets/js/razorpay.js"></script>
+<script src="../assets/js/notifications.js"></script>
+<script>
+// ── BOOKING STATE ─────────────────────────────────
+const B = {
+  trainer: { id:1, name:'Arjun Sharma', avatar:'AS', coins:50, price:1200, spec:'Weight Loss & HIIT · 8 yrs · Delhi', grad:'linear-gradient(135deg,#FF4500,#FF6A35)' },
+  type: null,
+  date: null, dateLabel: null,
+  time: null,
+  address: null,
+  zoomMeeting: null,
+  bookingId: null,
+  payMethod: 'coins'
+};
+
+// ── LOAD TRAINER FROM URL ────────────────────────
+(function() {
+  const tid = parseInt(new URLSearchParams(location.search).get('trainer') || '1');
+  const t = TRAINERS.find(x => x.id === tid) || TRAINERS[0];
+  B.trainer = { id:t.id, name:t.name, avatar:t.avatar, coins:t.coins, price:t.price, spec:t.spec+' · '+t.city, grad:t.grad, about:t.about, certs:t.certs, reviews:t.reviews };
+  // Fill trainer hero
+  const av = document.getElementById('th-av');
+  av.textContent = t.avatar; av.style.background = t.grad;
+  document.getElementById('th-name').textContent    = t.name;
+  document.getElementById('th-spec').textContent    = t.spec + ' · ' + t.city;
+  document.getElementById('th-price').textContent   = '₹' + t.price.toLocaleString();
+  document.getElementById('th-coins-lbl').textContent = '🪙 ' + t.coins + ' coins';
+  document.getElementById('th-reviews').textContent  = t.reviews;
+  document.getElementById('th-reviews2').textContent = t.reviews;
+  document.getElementById('th-about').textContent    = t.about;
+  document.getElementById('th-certs').innerHTML      = t.certs.map(c=>`<span class="tag" style="font-size:.7rem">📜 ${c}</span>`).join('');
+  document.getElementById('date-trainer-name').textContent = t.name;
+  document.getElementById('st-coins-online').textContent = `🪙 ${t.coins} coins`;
+  document.getElementById('st-coins-offline').textContent = `🪙 ${t.coins} coins`;
+  document.getElementById('card-price-lbl').textContent = `₹${t.price.toLocaleString()} — Card, UPI, NetBanking`;
+})();
+
+// Reviews demo data
+const REVIEWS = [
+  { name:'Amit M.',  stars:5, text:'Lost 8kg in 6 weeks! Arjun\'s sessions are intense but results are incredible. Best decision I\'ve made.', time:'2 weeks ago', av:'AM', grad:'linear-gradient(135deg,#38BFFF,#8B5CF6)' },
+  { name:'Priya R.', stars:5, text:'Very knowledgeable and so motivating. Online sessions are super convenient. Diet plan was spot on!', time:'1 month ago', av:'PR', grad:'linear-gradient(135deg,#FFB800,#FF4500)' },
+  { name:'Dev K.',   stars:5, text:'Finally found a trainer who actually customises the program. Not a generic plan. Huge difference.',   time:'2 months ago', av:'DK', grad:'linear-gradient(135deg,#00E5A0,#38BFFF)' },
+];
+document.getElementById('reviews-list').innerHTML = REVIEWS.map(r => `
+  <div class="review-card">
+    <div class="review-q">${r.text}</div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <div class="av av-sm" style="background:${r.grad}">${r.av}</div>
+      <div>
+        <div style="font-weight:700;font-size:.85rem">${r.name}</div>
+        <div style="color:var(--gold);font-size:.72rem">★★★★★ · ${r.time}</div>
+      </div>
+    </div>
+  </div>`).join('');
+
+// ── STEPPER ───────────────────────────────────────
+function goStep(n) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('on'));
+  document.getElementById('panel-'+n)?.classList.add('on');
+  for (let i=1; i<=5; i++) {
+    const sn=document.getElementById('sn'+i), sc=document.getElementById('sc'+i);
+    sn.classList.remove('on','done');
+    if (i < n)      { sn.classList.add('done'); sc.textContent='✓'; }
+    else if (i===n) { sn.classList.add('on');   sc.textContent=i;   }
+    else              sc.textContent=i;
+  }
+  window.scrollTo({top:0, behavior:'smooth'});
+  if (n===3) buildDatePicker();
+}
+
+// ── STEP 2: TYPE ──────────────────────────────────
+function selectType(t) {
+  B.type = t;
+  document.getElementById('st-online').classList.toggle('on', t==='online');
+  document.getElementById('st-offline').classList.toggle('on', t==='offline');
+  document.getElementById('address-wrap').style.display = t==='offline' ? 'block' : 'none';
+}
+function proceedFromType() {
+  if (!B.type) { Toast.show('Please select a session type', 'error'); return; }
+  if (B.type==='offline') {
+    B.address = document.getElementById('address-input').value.trim();
+    if (!B.address) { Toast.show('Please enter your address for home visit', 'error'); return; }
+  }
+  goStep(3);
+}
+
+// ── STEP 3: DATE & TIME ───────────────────────────
+// Available slots by day of week (0=Sun)
+const AVAIL_SLOTS = {
+  0:[], // Sunday off
+  1:['6:00 AM','7:00 AM','8:00 AM','6:00 PM','7:00 PM'],
+  2:['7:00 AM','8:00 AM','9:00 AM','5:00 PM','6:00 PM'],
+  3:['6:30 AM','7:30 AM','8:30 AM','6:30 PM'],
+  4:['7:00 AM','8:00 AM','9:00 AM','5:30 PM','6:30 PM'],
+  5:['6:00 AM','7:00 AM','8:00 AM','4:00 PM','5:00 PM','6:00 PM'],
+  6:['8:00 AM','9:00 AM','10:00 AM'], // Saturday limited
+};
+const BOOKED_SLOTS = { 1:['7:00 AM'], 3:['8:30 AM'], 5:['6:00 AM'] };
+const DAYS3 = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const MONTHS3 = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+function buildDatePicker() {
+  const scroll = document.getElementById('date-scroll');
+  const now = new Date();
+  scroll.innerHTML = Array.from({length:14}, (_,i) => {
+    const d = new Date(now); d.setDate(now.getDate()+i);
+    const dow = d.getDay();
+    const hasSlots = (AVAIL_SLOTS[dow]||[]).length > 0;
+    return `<div class="date-chip ${!hasSlots?'off':''}" onclick="selectDate(this,'${d.toISOString()}',${dow},${d.getDate()})">
+      <div class="dc-day">${DAYS3[dow]}</div>
+      <div class="dc-num">${d.getDate()}</div>
+      <div class="dc-mon">${MONTHS3[d.getMonth()]}</div>
+    </div>`;
+  }).join('');
+}
+
+function selectDate(el, iso, dow, dayNum) {
+  document.querySelectorAll('.date-chip').forEach(c => c.classList.remove('on'));
+  el.classList.add('on');
+  B.date = iso;
+  B.dateLabel = el.querySelector('.dc-num').textContent + ' ' + el.querySelector('.dc-mon').textContent;
+
+  const slots = AVAIL_SLOTS[dow] || [];
+  const booked = BOOKED_SLOTS[dayNum] || [];
+  document.getElementById('slot-hint').textContent = slots.length ? `${slots.length - booked.length} slots available` : 'No slots on this day';
+  document.getElementById('time-grid').innerHTML = slots.map(s => `
+    <div class="tslot ${booked.includes(s)?'booked':''}" onclick="selectTime(this,'${s}')">
+      ${s}${booked.includes(s)?'<br><span style="font-size:.6rem">Booked</span>':''}
+    </div>`).join('');
+}
+
+function selectTime(el, t) {
+  if (el.classList.contains('booked')) return;
+  document.querySelectorAll('.tslot').forEach(s => s.classList.remove('on'));
+  el.classList.add('on');
+  B.time = t;
+}
+
+function proceedFromDateTime() {
+  if (!B.date) { Toast.show('Please select a date', 'error'); return; }
+  if (!B.time) { Toast.show('Please select a time slot', 'error'); return; }
+  updateSummary();
+  goStep(4);
+}
+
+// ── STEP 4: CONFIRM ───────────────────────────────
+function updateSummary() {
+  document.getElementById('sum-trainer').textContent = B.trainer.name;
+  document.getElementById('sum-type').textContent    = B.type==='online' ? '📱 Online (Zoom)' : '🏠 Home Visit';
+  document.getElementById('sum-date').textContent    = B.dateLabel;
+  document.getElementById('sum-time').textContent    = B.time;
+  document.getElementById('sum-coins').textContent   = `🪙 ${B.trainer.coins} coins`;
+  document.getElementById('sum-remaining').textContent = `🪙 ${Coins.get() - B.trainer.coins} coins`;
+  document.getElementById('zoom-preview').style.display   = B.type==='online'  ? 'block' : 'none';
+  document.getElementById('home-preview').style.display   = B.type==='offline' ? 'block' : 'none';
+  if (B.address) document.getElementById('home-addr-show').textContent = B.address;
+}
+
+function selectPay(method) {
+  B.payMethod = method;
+  document.getElementById('pay-coins-opt').classList.toggle('on', method==='coins');
+  document.getElementById('pay-card-opt').classList.toggle('on', method==='card');
+}
+
+async function confirmBooking() {
+  if (!document.getElementById('terms-check').checked) {
+    Toast.show('Please agree to the Terms of Service', 'error'); return;
+  }
+  const btn = document.getElementById('confirm-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span> Processing…';
+
+  if (B.payMethod === 'card') {
+    // Razorpay payment flow
+    RazorPay.pay({
+      amount: B.trainer.price,
+      purpose: `Session with ${B.trainer.name}`,
+      onSuccess: res => finalizeBooking(res.paymentId),
+      onFailure: () => { btn.disabled=false; btn.innerHTML='Confirm Booking 🎯'; }
+    });
+    return;
+  }
+
+  // Coin payment
+  if (!Coins.deduct(B.trainer.coins, B.trainer.name + ' session')) {
+    btn.disabled=false; btn.innerHTML='Confirm Booking 🎯';
+    Modal.open('topup-modal'); return;
+  }
+
+  // Generate Zoom meeting
+  if (B.type === 'online') {
+    B.zoomMeeting = await Zoom.createMeeting({
+      topic: `FitPro — ${B.trainer.name} × ${B.dateLabel} ${B.time}`,
+      startTime: B.date,
+      durationMins: 60
+    });
+  }
+
+  finalizeBooking(null);
+}
+
+async function finalizeBooking(paymentId) {
+  B.bookingId = 'BK' + Date.now().toString().slice(-8);
+
+  // Save to Supabase
+  await DB.createBooking({
+    learner_id:   'demo_learner',
+    trainer_id:   B.trainer.id,
+    session_date: B.date,
+    session_type: B.type,
+    coins_spent:  B.trainer.coins,
+    status:       'confirmed',
+    zoom_link:    B.zoomMeeting?.joinUrl  || null,
+    zoom_password:B.zoomMeeting?.password || null,
+    address:      B.address || null,
+    notes:        document.getElementById('booking-note').value
+  });
+
+  // Schedule reminder
+  Notifications.scheduleReminder(B.date, 'You', B.trainer.name, B.zoomMeeting?.joinUrl);
+
+  // Fill success panel
+  const av = document.getElementById('conf-av');
+  av.textContent = B.trainer.avatar; av.style.background = B.trainer.grad;
+  document.getElementById('conf-trainer').textContent = B.trainer.name;
+  document.getElementById('conf-date').textContent    = B.dateLabel;
+  document.getElementById('conf-time').textContent    = B.time;
+  document.getElementById('conf-type').textContent    = B.type==='online' ? '📱 Online' : '🏠 Home Visit';
+  document.getElementById('conf-coins').textContent   = B.payMethod==='card' ? `₹${B.trainer.price.toLocaleString()} (card)` : `${B.trainer.coins} coins`;
+  document.getElementById('conf-id').textContent      = B.bookingId;
+
+  if (B.zoomMeeting) {
+    document.getElementById('conf-zoom').style.display    = 'block';
+    document.getElementById('conf-mid').textContent       = B.zoomMeeting.meetingId;
+    document.getElementById('conf-mpwd').textContent      = B.zoomMeeting.password;
+    document.getElementById('conf-zoom-link').href        = B.zoomMeeting.joinUrl;
+  }
+
+  goStep(5);
+  launchConfetti();
+  Toast.show('Booking confirmed! Details sent to email 📧', 'success', 5000);
+  Notifications._inApp('booking_confirmed', { learnerName:'You', trainerName:B.trainer.name });
+}
+
+// ── CONFETTI ──────────────────────────────────────
+function launchConfetti() {
+  const wrap = document.createElement('div');
+  wrap.className = 'conf-wrap';
+  document.body.appendChild(wrap);
+  const colors = ['#FF4500','#FF6B35','#00E5A0','#38BFFF','#FFB800','#A855F7'];
+  for (let i=0; i<80; i++) {
+    const p = document.createElement('div');
+    const c = colors[Math.floor(Math.random()*colors.length)];
+    const sz = Math.random()*10+5;
+    p.style.cssText = `position:absolute;top:-20px;left:${Math.random()*100}%;width:${sz}px;height:${sz}px;background:${c};border-radius:${Math.random()>.5?'50%':'3px'};animation:confFall ${Math.random()*2+2}s ease-in ${Math.random()*2}s forwards;`;
+    wrap.appendChild(p);
+  }
+  setTimeout(() => wrap.remove(), 5000);
+}
+
+// ── TOP UP ────────────────────────────────────────
+function topUp(amount, coins) {
+  Modal.close('topup-modal');
+  demoPayment(amount, coins+' FitCoins', () => {
+    Coins.add(coins);
+    document.getElementById('sum-remaining').textContent = `🪙 ${Coins.get() - B.trainer.coins} coins`;
+  });
+}
+</script>
+</body>
+</html>
