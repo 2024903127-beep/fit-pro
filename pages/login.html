@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login — FitPro</title>
+<link rel="stylesheet" href="../assets/css/design-system.css">
+<style>
+/* ── AUTH LAYOUT ─────────────────────────────── */
+body { min-height: 100svh; display: flex; overflow: hidden; }
+
+.auth-left {
+  flex: 1; position: relative; display: none;
+  overflow: hidden; background: var(--ink-1);
+}
+@media (min-width: 900px) { .auth-left { display: flex; } }
+
+.auth-left-canvas { position: absolute; inset: 0; }
+.auth-left-content {
+  position: relative; z-index: 2;
+  display: flex; flex-direction: column;
+  justify-content: space-between;
+  padding: 40px; width: 100%; height: 100%;
+}
+.auth-left-logo {
+  font-family: var(--font-display); font-size: 1.5rem; font-weight: 800;
+  display: flex; align-items: center; gap: 10px; color: var(--txt-1);
+}
+.auth-left-logo-mark {
+  width: 36px; height: 36px; background: var(--brand);
+  border-radius: 8px; display: flex; align-items: center; justify-content: center;
+}
+.auth-left-quote {
+  font-family: var(--font-display);
+  font-size: clamp(2.2rem, 4vw, 3.5rem);
+  font-weight: 800; line-height: 1.0;
+  letter-spacing: -0.01em;
+}
+.auth-left-quote .q-fire { color: var(--brand); }
+.auth-left-quote .q-outline {
+  -webkit-text-stroke: 1px rgba(255,255,255,0.22);
+  color: transparent;
+}
+.auth-left-stats {
+  display: flex; gap: 32px;
+}
+.auth-stat-num {
+  font-family: var(--font-display); font-size: 1.8rem; font-weight: 800;
+  color: var(--brand);
+}
+.auth-stat-label { font-size: 0.72rem; color: var(--txt-3); font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; }
+
+/* Floating trainer badges */
+.trainer-badge {
+  position: absolute; z-index: 3;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--wire-md);
+  backdrop-filter: blur(16px);
+  border-radius: var(--r-lg);
+  padding: 12px 16px;
+  display: flex; align-items: center; gap: 10px;
+  animation: float 4s ease-in-out infinite;
+}
+.tb-1 { top: 22%; right: 8%; animation-delay: 0s; }
+.tb-2 { top: 48%; right: 6%; animation-delay: 1.5s; }
+.tb-3 { top: 72%; right: 10%; animation-delay: 0.8s; }
+.trainer-badge-name { font-size: 0.82rem; font-weight: 700; }
+.trainer-badge-spec { font-size: 0.68rem; color: var(--txt-3); }
+.trainer-badge-rating { font-size: 0.75rem; color: var(--gold); font-weight: 700; }
+
+/* ── AUTH RIGHT (FORM) ──────────────────────── */
+.auth-right {
+  width: 100%; max-width: 480px;
+  display: flex; align-items: center; justify-content: center;
+  padding: 24px; background: var(--ink);
+  position: relative; overflow-y: auto;
+}
+@media (min-width: 900px) { .auth-right { border-left: 1px solid var(--wire); } }
+
+.auth-form-wrap { width: 100%; max-width: 380px; }
+
+.auth-mobile-logo {
+  display: flex; align-items: center; gap: 8px;
+  font-family: var(--font-display); font-size: 1.3rem; font-weight: 800;
+  margin-bottom: 40px;
+}
+@media (min-width: 900px) { .auth-mobile-logo { display: none; } }
+.auth-mobile-logo-mark {
+  width: 32px; height: 32px; background: var(--brand);
+  border-radius: 8px; display: flex; align-items: center; justify-content: center;
+}
+
+.auth-heading { font-family: var(--font-display); font-size: 2.4rem; font-weight: 800; line-height: 1.05; margin-bottom: 8px; }
+.auth-sub { font-size: 0.875rem; color: var(--txt-2); margin-bottom: 32px; }
+
+/* Role tabs */
+.role-tabs {
+  display: grid; grid-template-columns: repeat(3,1fr);
+  gap: 8px; margin-bottom: 28px;
+}
+.role-tab {
+  padding: 12px 6px; border-radius: var(--r-md);
+  border: 1px solid var(--wire-md);
+  background: transparent; cursor: pointer;
+  text-align: center; transition: all var(--dur-fast);
+  font-family: var(--font-body);
+  -webkit-tap-highlight-color: transparent;
+}
+.role-tab:hover { border-color: var(--wire-hi); background: var(--wire); }
+.role-tab.active { border-color: var(--brand); background: var(--brand-dim); }
+.role-tab-icon { font-size: 1.4rem; margin-bottom: 4px; display: block; }
+.role-tab-label { font-size: 0.72rem; font-weight: 700; color: var(--txt-2); }
+.role-tab.active .role-tab-label { color: var(--brand); }
+
+/* Steps */
+.form-step { display: none; flex-direction: column; gap: 16px; }
+.form-step.active { display: flex; }
+
+/* OTP inputs */
+.otp-row { display: flex; gap: 8px; justify-content: space-between; }
+.otp-box {
+  flex: 1; height: 56px;
+  text-align: center; font-size: 1.4rem; font-weight: 700;
+  font-family: var(--font-display);
+  background: var(--ink-2); color: var(--txt-1);
+  border: 1px solid var(--wire-md); border-radius: var(--r-md);
+  outline: none; transition: border-color var(--dur-fast), box-shadow var(--dur-fast);
+  caret-color: var(--brand);
+}
+.otp-box:focus { border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-dim); }
+
+.otp-hint { text-align: center; font-size: 0.78rem; color: var(--txt-3); }
+.otp-hint a { color: var(--brand); cursor: pointer; }
+
+/* Divider */
+.auth-divider {
+  display: flex; align-items: center; gap: 12px;
+  font-size: 0.75rem; color: var(--txt-3);
+}
+.auth-divider::before, .auth-divider::after {
+  content: ''; flex: 1; height: 1px; background: var(--wire-md);
+}
+
+.auth-switch { text-align: center; font-size: 0.82rem; color: var(--txt-3); }
+.auth-switch a { color: var(--brand); font-weight: 600; }
+
+.back-link { display: flex; align-items: center; gap: 6px; font-size: 0.82rem; color: var(--txt-3); cursor: pointer; background: none; border: none; font-family: var(--font-body); transition: color 0.2s; width: fit-content; }
+.back-link:hover { color: var(--txt-1); }
+</style>
+</head>
+<body>
+
+<!-- LEFT PANEL -->
+<div class="auth-left">
+  <canvas class="auth-left-canvas" id="left-canvas"></canvas>
+
+  <!-- Floating trainer cards -->
+  <div class="trainer-badge tb-1" style="animation-duration:4s">
+    <div class="avatar avatar-sm" style="background:linear-gradient(135deg,#FF4500,#FF6B35)">AS</div>
+    <div>
+      <div class="trainer-badge-name">Arjun Sharma</div>
+      <div class="trainer-badge-spec">Weight Loss · Delhi</div>
+      <div class="trainer-badge-rating">★ 4.9 · 128 reviews</div>
+    </div>
+  </div>
+  <div class="trainer-badge tb-2" style="animation-duration:5s">
+    <div class="avatar avatar-sm" style="background:linear-gradient(135deg,#38BFFF,#8B5CF6)">PM</div>
+    <div>
+      <div class="trainer-badge-name">Priya Mehta</div>
+      <div class="trainer-badge-spec">Yoga · Mumbai</div>
+      <div class="trainer-badge-rating">★ 4.8 · 95 reviews</div>
+    </div>
+  </div>
+  <div class="trainer-badge tb-3" style="animation-duration:3.5s">
+    <div class="avatar avatar-sm" style="background:linear-gradient(135deg,#00E5A0,#38BFFF)">RS</div>
+    <div>
+      <div class="trainer-badge-name">Rahul Singh</div>
+      <div class="trainer-badge-spec">Muscle Building · Bangalore</div>
+      <div class="trainer-badge-rating">★ 4.7 · 203 reviews</div>
+    </div>
+  </div>
+
+  <div class="auth-left-content">
+    <div class="auth-left-logo">
+      <div class="auth-left-logo-mark">💪</div>
+      FitPro
+    </div>
+    <div>
+      <div class="auth-left-quote">
+        Your<br>
+        <span class="q-fire">strongest</span><br>
+        <span class="q-outline">self awaits.</span>
+      </div>
+    </div>
+    <div class="auth-left-stats">
+      <div>
+        <div class="auth-stat-num">5K+</div>
+        <div class="auth-stat-label">Learners</div>
+      </div>
+      <div>
+        <div class="auth-stat-num">350+</div>
+        <div class="auth-stat-label">Trainers</div>
+      </div>
+      <div>
+        <div class="auth-stat-num">98%</div>
+        <div class="auth-stat-label">Satisfaction</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- RIGHT FORM PANEL -->
+<div class="auth-right">
+  <div class="auth-form-wrap">
+    <div class="auth-mobile-logo">
+      <div class="auth-mobile-logo-mark">💪</div>
+      FitPro
+    </div>
+
+    <!-- Role tabs -->
+    <div class="role-tabs" id="role-tabs">
+      <button class="role-tab active" id="tab-trainer" onclick="setRole('trainer',this)">
+        <span class="role-tab-icon">🏋️</span>
+        <span class="role-tab-label">Trainer</span>
+      </button>
+      <button class="role-tab" id="tab-learner" onclick="setRole('learner',this)">
+        <span class="role-tab-icon">🎯</span>
+        <span class="role-tab-label">Learner</span>
+      </button>
+      <button class="role-tab" id="tab-admin" onclick="setRole('admin',this)">
+        <span class="role-tab-icon">👑</span>
+        <span class="role-tab-label">Admin</span>
+      </button>
+    </div>
+
+    <!-- STEP 1: EMAIL -->
+    <div class="form-step active" id="step-email">
+      <div>
+        <h1 class="auth-heading">Welcome<br>back.</h1>
+        <p class="auth-sub">Enter your email to get a login OTP</p>
+      </div>
+      <div class="input-group">
+        <label>Email address</label>
+        <input class="input" type="email" id="email-input" placeholder="you@example.com" autocomplete="email">
+      </div>
+      <button class="btn btn-fire btn-lg" style="width:100%" onclick="sendOTP()">Send OTP →</button>
+      <div class="auth-divider">or continue with</div>
+      <button class="btn btn-glass btn-lg" style="width:100%;justify-content:center" onclick="googleLogin()">
+        <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+        Continue with Google
+      </button>
+      <div class="auth-switch">Don't have an account? <a href="register.html">Register free</a></div>
+    </div>
+
+    <!-- STEP 2: OTP -->
+    <div class="form-step" id="step-otp">
+      <button class="back-link" onclick="goBack()">← Back</button>
+      <div>
+        <h1 class="auth-heading">Check your<br>email.</h1>
+        <p class="auth-sub" id="otp-hint-text">6-digit OTP sent. Demo: use <strong style="color:var(--brand)">123456</strong></p>
+      </div>
+      <div class="otp-row">
+        <input class="otp-box" maxlength="1" id="otp-0" inputmode="numeric">
+        <input class="otp-box" maxlength="1" id="otp-1" inputmode="numeric">
+        <input class="otp-box" maxlength="1" id="otp-2" inputmode="numeric">
+        <input class="otp-box" maxlength="1" id="otp-3" inputmode="numeric">
+        <input class="otp-box" maxlength="1" id="otp-4" inputmode="numeric">
+        <input class="otp-box" maxlength="1" id="otp-5" inputmode="numeric">
+      </div>
+      <div class="otp-hint">Resend in <span id="timer">30</span>s · <a onclick="resendOTP()">Resend OTP</a></div>
+      <button class="btn btn-fire btn-lg" style="width:100%" onclick="verifyOTP()">Verify & Login →</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toast-container"></div>
+
+<script src="../assets/js/app.js"></script>
+<script>
+// ── CANVAS BG ─────────────────────────────────
+(function() {
+  const canvas = document.getElementById('left-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  let W, H, particles = [];
+  function resize() { W = canvas.width = canvas.parentElement.offsetWidth; H = canvas.height = canvas.parentElement.offsetHeight; }
+  function mkP() { return { x: Math.random()*W, y: Math.random()*H, vx:(Math.random()-.5)*.3, vy:(Math.random()-.5)*.3, r:Math.random()*1.5+.3, a:Math.random()*.35+.05, c:Math.random()>.88?'255,69,0':'255,255,255' }; }
+  function draw() {
+    ctx.clearRect(0,0,W,H);
+    for(let i=0;i<particles.length;i++){
+      for(let j=i+1;j<particles.length;j++){
+        const dx=particles[i].x-particles[j].x,dy=particles[i].y-particles[j].y,d=Math.sqrt(dx*dx+dy*dy);
+        if(d<120){ctx.beginPath();ctx.moveTo(particles[i].x,particles[i].y);ctx.lineTo(particles[j].x,particles[j].y);ctx.strokeStyle=`rgba(255,255,255,${.05*(1-d/120)})`;ctx.lineWidth=.5;ctx.stroke();}
+      }
+      const p=particles[i];
+      p.x+=p.vx;p.y+=p.vy;
+      if(p.x<0)p.x=W;if(p.x>W)p.x=0;if(p.y<0)p.y=H;if(p.y>H)p.y=0;
+      ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fillStyle=`rgba(${p.c},${p.a})`;ctx.fill();
+    }
+    requestAnimationFrame(draw);
+  }
+  resize();
+  particles = Array.from({length:60},mkP);
+  draw();
+  window.addEventListener('resize', resize);
+})();
+
+// ── ROLE ──────────────────────────────────────
+let role = 'trainer';
+const urlRole = new URLSearchParams(location.search).get('role');
+if (urlRole) setRole(urlRole, document.getElementById('tab-'+urlRole));
+
+function setRole(r, btn) {
+  role = r;
+  document.querySelectorAll('.role-tab').forEach(t => t.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+}
+
+// ── OTP FLOW ──────────────────────────────────
+let timerInt;
+function sendOTP() {
+  const email = document.getElementById('email-input').value.trim();
+  if (!email || !email.includes('@')) { showToast('Enter a valid email', 'error'); return; }
+  document.getElementById('otp-hint-text').innerHTML = `Sent to <strong>${email}</strong> · Demo: use <strong style="color:var(--brand)">123456</strong>`;
+  document.getElementById('step-email').classList.remove('active');
+  document.getElementById('step-otp').classList.add('active');
+  document.getElementById('otp-0').focus();
+  showToast('OTP sent!', 'success');
+  startTimer(30);
+}
+
+function startTimer(s) {
+  clearInterval(timerInt);
+  document.getElementById('timer').textContent = s;
+  timerInt = setInterval(() => { s--; document.getElementById('timer').textContent = s; if (s<=0) clearInterval(timerInt); }, 1000);
+}
+
+function resendOTP() { showToast('OTP resent!', 'info'); startTimer(30); }
+
+function goBack() {
+  document.getElementById('step-otp').classList.remove('active');
+  document.getElementById('step-email').classList.add('active');
+  clearInterval(timerInt);
+}
+
+// OTP keyboard navigation
+for (let i = 0; i < 6; i++) {
+  const box = document.getElementById(`otp-${i}`);
+  box.addEventListener('input', () => {
+    const val = box.value.replace(/\D/g,'');
+    box.value = val.slice(-1);
+    if (val && i < 5) document.getElementById(`otp-${i+1}`).focus();
+    const full = Array.from({length:6},(_,j)=>document.getElementById(`otp-${j}`).value).join('');
+    if (full.length === 6) verifyOTP();
+  });
+  box.addEventListener('keydown', e => {
+    if (e.key==='Backspace' && !box.value && i > 0) document.getElementById(`otp-${i-1}`).focus();
+  });
+  box.addEventListener('paste', e => {
+    const text = e.clipboardData.getData('text').replace(/\D/g,'').slice(0,6);
+    if (text.length) {
+      e.preventDefault();
+      text.split('').forEach((ch,j) => { const b=document.getElementById(`otp-${j}`); if(b) b.value=ch; });
+      document.getElementById(`otp-${Math.min(text.length,5)}`).focus();
+    }
+  });
+}
+
+function verifyOTP() {
+  const otp = Array.from({length:6},(_,i)=>document.getElementById(`otp-${i}`).value).join('');
+  if (otp.length < 6) { showToast('Enter all 6 digits', 'error'); return; }
+  showToast('Login successful! Redirecting…', 'success');
+  setTimeout(() => {
+    const dest = role==='trainer' ? 'trainer-dashboard.html' : role==='admin' ? 'admin-dashboard.html' : 'learner-dashboard.html';
+    window.location.href = dest;
+  }, 900);
+}
+
+function googleLogin() {
+  showToast('Google OAuth — configure in Supabase', 'info');
+  setTimeout(() => window.location.href = role==='trainer' ? 'trainer-dashboard.html' : role==='admin' ? 'admin-dashboard.html' : 'learner-dashboard.html', 1400);
+}
+
+// TOAST
+function showToast(msg, type='info') {
+  const icons = {success:'✓',error:'✕',info:'ℹ'};
+  const c = document.getElementById('toast-container');
+  const t = document.createElement('div');
+  t.className = `toast toast-${type}`;
+  t.innerHTML = `<span class="toast-icon">${icons[type]}</span><span>${msg}</span>`;
+  c.appendChild(t);
+  setTimeout(()=>{t.style.opacity='0';t.style.transform='translateX(20px)';setTimeout(()=>t.remove(),300);},3500);
+}
+</script>
+</body>
+</html>

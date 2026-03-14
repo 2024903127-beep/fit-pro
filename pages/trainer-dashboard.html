@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trainer Dashboard — FitPro</title>
+<link rel="stylesheet" href="../assets/css/design-system.css">
+<style>
+.page{display:none}.page.active{display:block}
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
+
+/* Learner row */
+.learner-row{display:flex;align-items:center;gap:14px;padding:18px 20px;background:var(--ink-2);border:1px solid var(--wire);border-radius:var(--r-xl);transition:all var(--dur)}
+.learner-row:hover{border-color:var(--wire-hi);transform:translateX(4px)}
+
+/* Booking request */
+.booking-req{display:flex;align-items:center;gap:14px;padding:18px 20px;background:var(--ink-2);border:1px solid var(--wire);border-radius:var(--r-xl);transition:border-color var(--dur)}
+.booking-req:hover{border-color:var(--wire-hi)}
+
+/* Notice board */
+.notice-card{background:linear-gradient(135deg,rgba(255,184,0,0.08),var(--ink-2));border:1px solid rgba(255,184,0,0.18);border-radius:var(--r-xl);padding:20px}
+.notice-item{padding:14px;background:rgba(0,0,0,0.2);border-radius:var(--r-md);margin-bottom:10px}
+.notice-item:last-child{margin-bottom:0}
+
+/* Upload zone */
+.drop-zone{border:2px dashed var(--wire-md);border-radius:var(--r-xl);padding:40px;text-align:center;cursor:pointer;transition:all var(--dur)}
+.drop-zone:hover{border-color:var(--brand);background:var(--brand-dim)}
+.drop-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+
+/* Attendance grid */
+.att-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+.att-cell{aspect-ratio:1;border-radius:6px;border:1px solid var(--wire);display:flex;align-items:center;justify-content:center;font-size:0.68rem;font-weight:700;cursor:pointer;transition:all 0.2s;color:var(--txt-3)}
+.att-cell:hover{border-color:var(--brand)}
+.att-cell.present{background:rgba(0,229,160,0.18);border-color:rgba(0,229,160,0.35);color:var(--mint)}
+.att-cell.absent{background:rgba(255,69,0,0.12);border-color:rgba(255,69,0,0.25);color:var(--brand)}
+
+/* Calendar grid */
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.cal-cell{aspect-ratio:1;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:0.78rem;cursor:pointer;transition:all 0.2s;border:1px solid transparent;color:var(--txt-3)}
+.cal-cell:hover{background:var(--wire)}
+.cal-cell.has-session{background:var(--brand-dim);border-color:rgba(255,69,0,0.3);color:var(--brand);font-weight:700}
+.cal-cell.today{background:var(--brand);color:#fff;font-weight:700}
+
+/* Messages */
+.msg-layout{display:grid;grid-template-columns:260px 1fr;height:calc(100vh - 180px);border:1px solid var(--wire);border-radius:var(--r-xl);overflow:hidden}
+.msg-list{background:var(--ink-1);border-right:1px solid var(--wire);overflow-y:auto}
+.msg-item{padding:14px 16px;cursor:pointer;border-bottom:1px solid var(--wire);transition:background var(--dur-fast)}
+.msg-item:hover,.msg-item.active{background:rgba(0,229,160,0.06)}
+.msg-item.active{border-left:2px solid var(--mint)}
+.msg-preview{font-size:0.75rem;color:var(--txt-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.msg-main{display:flex;flex-direction:column;background:var(--ink)}
+.msg-top{padding:14px 20px;border-bottom:1px solid var(--wire);display:flex;align-items:center;gap:12px}
+.msg-body{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:12px}
+.bubble{max-width:65%;padding:11px 16px;border-radius:18px;font-size:0.875rem;line-height:1.55}
+.bubble-in{background:var(--ink-2);border:1px solid var(--wire);border-radius:18px 18px 18px 4px;align-self:flex-start}
+.bubble-out{background:var(--mint);color:#000;border-radius:18px 18px 4px 18px;align-self:flex-end}
+.bubble-time{font-size:0.65rem;color:var(--txt-3);margin-top:3px}
+.msg-input-row{padding:14px 20px;border-top:1px solid var(--wire);display:flex;gap:10px}
+
+/* Wallet */
+.wallet-hero{background:linear-gradient(135deg,rgba(0,229,160,0.12),rgba(56,191,255,0.06));border:1px solid rgba(0,229,160,0.2);border-radius:var(--r-2xl);padding:28px;position:relative;overflow:hidden}
+.wallet-glow{position:absolute;right:-60px;top:-60px;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,rgba(0,229,160,0.2),transparent);pointer-events:none}
+.wallet-num{font-family:var(--font-display);font-size:3.5rem;font-weight:800;color:var(--gold);line-height:1}
+
+/* Notif btn */
+.notif-btn{width:40px;height:40px;background:var(--wire);border:1px solid var(--wire-md);border-radius:var(--r-sm);display:flex;align-items:center;justify-content:center;font-size:1.1rem;cursor:pointer;position:relative;transition:background var(--dur-fast)}
+.notif-btn:hover{background:var(--wire-md)}
+.notif-dot{position:absolute;top:6px;right:6px;width:8px;height:8px;border-radius:50%;background:var(--brand);border:2px solid var(--ink)}
+
+/* Exercise builder */
+.exercise-row{display:grid;grid-template-columns:2fr 1fr 1fr 1fr auto;gap:8px;align-items:center;margin-bottom:8px}
+
+/* Mobile nav */
+.mobile-bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:200;background:rgba(17,17,17,0.95);backdrop-filter:blur(16px);border-top:1px solid var(--wire);padding:8px 16px 12px;justify-content:space-around}
+.mob-nav-item{display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:4px 8px;border-radius:var(--r-sm);background:none;border:none;font-family:var(--font-body);color:var(--txt-3);font-size:0.62rem;font-weight:600;transition:color 0.2s;-webkit-tap-highlight-color:transparent}
+.mob-nav-item.active{color:var(--mint)}
+.mob-nav-icon{font-size:1.3rem}
+
+@media(max-width:768px){
+  .stats-row{grid-template-columns:1fr 1fr}
+  .msg-layout{grid-template-columns:1fr;height:auto;min-height:500px}
+  .msg-list{display:none}
+  .mobile-bottom-nav{display:flex}
+  .main-content{padding-bottom:72px}
+  .dash-body{padding:14px}
+}
+@media(max-width:480px){.stats-row{grid-template-columns:1fr 1fr;gap:10px}}
+</style>
+</head>
+<body>
+<div class="dash-layout">
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <a href="../index.html">
+      <div class="sidebar-logo-mark">💪</div>
+      FitPro
+    </a>
+  </div>
+  <div class="sidebar-section">Overview</div>
+  <a class="nav-item active" onclick="showPage('overview',this)"><span class="nav-icon">🏠</span> Dashboard</a>
+  <a class="nav-item" onclick="showPage('learners',this)"><span class="nav-icon">👥</span> My Learners</a>
+  <a class="nav-item" onclick="showPage('bookings',this)">
+    <span class="nav-icon">📅</span> Bookings
+    <span class="badge badge-fire" style="margin-left:auto;font-size:0.6rem">3</span>
+  </a>
+  <div class="sidebar-section">Manage</div>
+  <a class="nav-item" onclick="showPage('calendar',this)"><span class="nav-icon">🗓️</span> Calendar</a>
+  <a class="nav-item" href="upload-center.html"><span class="nav-icon">📤</span> Upload Content</a>
+  <a class="nav-item" onclick="showPage('attendance',this)"><span class="nav-icon">✅</span> Attendance</a>
+  <div class="sidebar-section">Grow</div>
+  <a class="nav-item" onclick="showPage('messages',this)"><span class="nav-icon">💬</span> Messages</a>
+  <a class="nav-item" onclick="showPage('wallet',this)"><span class="nav-icon">🪙</span> Wallet</a>
+  <a class="nav-item" onclick="showPage('profile',this)"><span class="nav-icon">👤</span> My Profile</a>
+  <a class="nav-item" href="../index.html"><span class="nav-icon">🚪</span> Logout</a>
+  <div class="sidebar-footer">
+    <div class="sidebar-user">
+      <div class="avatar avatar-md" style="background:linear-gradient(135deg,var(--mint),var(--sky))">AS</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:0.85rem;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Arjun Sharma</div>
+        <div style="font-size:0.7rem;color:var(--mint)">✓ Verified Trainer</div>
+      </div>
+      <button onclick="toggleTheme()" style="background:none;border:none;font-size:0.9rem;color:var(--txt-3);padding:4px;cursor:pointer">🌙</button>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main-content">
+  <div class="topbar">
+    <div>
+      <div class="topbar-title" id="page-title">Dashboard</div>
+      <div class="topbar-sub">Good morning, Arjun 💪 — Wednesday, 14 March</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <div class="notif-btn" onclick="Modal.open('notif-modal')">🔔<span class="notif-dot"></span></div>
+      <a href="login.html" class="btn btn-outline btn-sm">Logout</a>
+    </div>
+  </div>
+
+  <div class="dash-body">
+
+  <!-- OVERVIEW -->
+  <div class="page active" id="page-overview">
+    <div class="stats-row">
+      <div class="stat-widget">
+        <div style="font-size:1.2rem;margin-bottom:6px">🪙</div>
+        <div class="stat-val" style="color:var(--gold)">280</div>
+        <div class="stat-label">Coin Wallet</div>
+        <div class="stat-change stat-up">Recharge to contact</div>
+      </div>
+      <div class="stat-widget">
+        <div style="font-size:1.2rem;margin-bottom:6px">👥</div>
+        <div class="stat-val">12</div>
+        <div class="stat-label">Active Learners</div>
+        <div class="stat-change stat-up">↑ 2 this month</div>
+      </div>
+      <div class="stat-widget">
+        <div style="font-size:1.2rem;margin-bottom:6px">💰</div>
+        <div class="stat-val" style="color:var(--mint)">₹24K</div>
+        <div class="stat-label">Monthly Earnings</div>
+        <div class="stat-change stat-up">↑ 22% vs last</div>
+      </div>
+      <div class="stat-widget">
+        <div style="font-size:1.2rem;margin-bottom:6px">⭐</div>
+        <div class="stat-val" style="color:var(--gold)">4.9</div>
+        <div class="stat-label">Avg Rating</div>
+        <div class="stat-change stat-up">128 reviews</div>
+      </div>
+    </div>
+
+    <div class="grid-2" style="margin-bottom:20px">
+      <!-- PENDING BOOKINGS -->
+      <div class="card" style="padding:20px">
+        <div class="flex-between" style="margin-bottom:16px">
+          <div style="font-family:var(--font-display);font-weight:700">Pending Bookings</div>
+          <span class="badge badge-fire">3 new</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px" id="pending-list"></div>
+      </div>
+      <!-- NOTICE BOARD -->
+      <div class="notice-card">
+        <div style="font-family:var(--font-display);font-weight:700;margin-bottom:14px;color:var(--gold)">📢 Notice Board</div>
+        <div class="notice-item">
+          <div style="font-size:0.85rem;font-weight:700;margin-bottom:3px">Platform Maintenance</div>
+          <div style="font-size:0.78rem;color:var(--txt-2)">Sunday 2–4 AM IST. No bookings during this window.</div>
+        </div>
+        <div class="notice-item">
+          <div style="font-size:0.85rem;font-weight:700;margin-bottom:3px">New: Diet Plan Uploads</div>
+          <div style="font-size:0.78rem;color:var(--txt-2)">Upload PDF diet charts directly from the Upload Center.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- EARNINGS CHART (canvas) -->
+    <div class="card" style="padding:20px">
+      <div class="flex-between" style="margin-bottom:16px">
+        <div style="font-family:var(--font-display);font-weight:700">Earnings — March 2024</div>
+        <span class="badge badge-mint">↑ 22% vs Feb</span>
+      </div>
+      <canvas id="earn-canvas" height="90"></canvas>
+    </div>
+  </div>
+
+  <!-- LEARNERS -->
+  <div class="page" id="page-learners">
+    <div class="flex-between" style="margin-bottom:20px;flex-wrap:wrap;gap:12px">
+      <input class="input" placeholder="🔍  Search learners…" style="max-width:320px">
+      <span class="badge badge-mint">12 Active</span>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px" id="learners-list"></div>
+  </div>
+
+  <!-- BOOKINGS -->
+  <div class="page" id="page-bookings">
+    <div class="filter-bar" style="margin-bottom:20px">
+      <button class="filter-btn active">Pending (3)</button>
+      <button class="filter-btn">Upcoming</button>
+      <button class="filter-btn">Completed</button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px" id="all-bookings"></div>
+  </div>
+
+  <!-- CALENDAR -->
+  <div class="page" id="page-calendar">
+    <div class="grid-2">
+      <div class="card" style="padding:22px">
+        <div class="flex-between" style="margin-bottom:18px">
+          <div style="font-family:var(--font-display);font-size:1.1rem;font-weight:700">March 2024</div>
+          <div style="display:flex;gap:6px">
+            <button class="btn btn-ghost btn-sm">← Prev</button>
+            <button class="btn btn-ghost btn-sm">Next →</button>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:8px">
+          ${['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d=>`<div style="text-align:center;font-size:0.62rem;font-weight:700;color:var(--txt-3);padding:4px;text-transform:uppercase">${d}</div>`).join('')}
+        </div>
+        <div class="cal-grid" id="trainer-cal"></div>
+        <div style="margin-top:14px;display:flex;gap:14px;font-size:0.75rem">
+          <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;background:var(--brand-dim);border:1px solid rgba(255,69,0,0.3);border-radius:3px;display:inline-block"></span>Session</span>
+          <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;background:var(--brand);border-radius:3px;display:inline-block"></span>Today</span>
+        </div>
+      </div>
+      <div class="card" style="padding:22px">
+        <div style="font-family:var(--font-display);font-weight:700;margin-bottom:16px">Set Availability</div>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div class="input-group"><label>Date</label><input type="date" class="input"></div>
+          <div class="input-group"><label>Available Slots</label><input class="input" placeholder="e.g. 7AM, 8AM, 9AM, 6PM"></div>
+          <div class="input-group"><label>Session Type</label>
+            <div style="display:flex;gap:14px;margin-top:6px">
+              <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:0.875rem"><input type="checkbox" checked style="accent-color:var(--brand)"> Online</label>
+              <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:0.875rem"><input type="checkbox" style="accent-color:var(--brand)"> Home Visit</label>
+            </div>
+          </div>
+          <button class="btn btn-mint btn-md" onclick="showToast('Availability saved!','success')">Save Availability ✓</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ATTENDANCE -->
+  <div class="page" id="page-attendance">
+    <div style="margin-bottom:18px;display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+      <select class="input" style="max-width:240px" id="att-learner" onchange="renderAtt()">
+        <option>Amit Kumar</option><option>Sneha Roy</option><option>Rohan Verma</option>
+      </select>
+      <span class="badge badge-mint" id="att-rate-badge">Loading…</span>
+    </div>
+    <div class="card" style="padding:22px">
+      <div style="font-family:var(--font-display);font-weight:700;margin-bottom:4px">March 2024 Attendance</div>
+      <div style="font-size:0.8rem;color:var(--txt-3);margin-bottom:16px">Tap cells to mark present / absent</div>
+      <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:8px">
+        ${['S','M','T','W','T','F','S'].map(d=>`<div style="text-align:center;font-size:0.62rem;font-weight:700;color:var(--txt-3);padding:3px;text-transform:uppercase">${d}</div>`).join('')}
+      </div>
+      <div class="att-grid" id="att-grid"></div>
+      <div style="margin-top:14px;display:flex;gap:20px;font-size:0.82rem;flex-wrap:wrap">
+        <span style="color:var(--mint)">✓ Present: <strong id="att-p">0</strong></span>
+        <span style="color:var(--brand)">✕ Absent: <strong id="att-a">0</strong></span>
+        <span style="color:var(--txt-2)">Attendance: <strong id="att-r">—</strong></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- MESSAGES -->
+  <div class="page" id="page-messages">
+    <div class="msg-layout">
+      <div class="msg-list">
+        <div style="padding:12px;border-bottom:1px solid var(--wire)">
+          <input class="input" placeholder="Search…" style="font-size:0.82rem;padding:8px 12px">
+        </div>
+        <div class="msg-item active">
+          <div style="display:flex;align-items:center;gap:10px">
+            <div class="avatar avatar-sm" style="background:linear-gradient(135deg,var(--sky),#8B5CF6)">AK</div>
+            <div style="flex:1;min-width:0"><div style="font-weight:700;font-size:0.85rem">Amit Kumar</div><div class="msg-preview">Yes sir! Ready 🔥</div></div>
+            <div style="font-size:0.65rem;color:var(--txt-3)">2m</div>
+          </div>
+        </div>
+        <div class="msg-item">
+          <div style="display:flex;align-items:center;gap:10px">
+            <div class="avatar avatar-sm" style="background:linear-gradient(135deg,#FFB800,#FF4500)">SR</div>
+            <div style="flex:1;min-width:0"><div style="font-weight:700;font-size:0.85rem">Sneha Roy</div><div class="msg-preview">Can we reschedule?</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="msg-main">
+        <div class="msg-top">
+          <div class="avatar avatar-sm" style="background:linear-gradient(135deg,var(--sky),#8B5CF6)">AK</div>
+          <div><div style="font-weight:700;font-size:0.9rem">Amit Kumar</div><div style="font-size:0.7rem;color:var(--mint)">● Online</div></div>
+        </div>
+        <div class="msg-body" id="trainer-msg-body">
+          <div><div class="bubble bubble-in">Good morning sir! Ready for today's HIIT 🔥</div><div class="bubble-time" style="padding-left:4px">7:00 AM</div></div>
+          <div style="align-self:flex-end;display:flex;flex-direction:column;align-items:flex-end"><div class="bubble bubble-out">Perfect! Join Zoom. Focus on form today.</div><div class="bubble-time" style="padding-right:4px">7:01 AM</div></div>
+          <div><div class="bubble bubble-in">Done! That was intense but amazing 💪</div><div class="bubble-time" style="padding-left:4px">8:05 AM</div></div>
+          <div style="align-self:flex-end;display:flex;flex-direction:column;align-items:flex-end"><div class="bubble bubble-out">Great work! Protein within 30 mins. Rest well tonight 🥗</div><div class="bubble-time" style="padding-right:4px">8:07 AM</div></div>
+        </div>
+        <div class="msg-input-row">
+          <input class="input" placeholder="Message Amit…" id="trainer-msg-input" style="flex:1" onkeydown="if(event.key==='Enter')sendTrainerMsg()">
+          <button class="btn btn-mint btn-sm" onclick="sendTrainerMsg()">Send</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- WALLET -->
+  <div class="page" id="page-wallet">
+    <div class="grid-2">
+      <div>
+        <div class="wallet-hero" style="margin-bottom:16px">
+          <div class="wallet-glow"></div>
+          <div style="position:relative">
+            <div style="font-size:0.72rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--txt-3);margin-bottom:6px">Coin Wallet</div>
+            <div class="wallet-num">280 🪙</div>
+            <div style="font-size:0.82rem;color:var(--txt-2);margin-top:6px">Use coins to contact new learners</div>
+            <button class="btn btn-fire" style="margin-top:18px" onclick="initiatePayment(499,'Trainer Coin Pack',()=>showToast('300 coins added!','success'))">+ Recharge</button>
+          </div>
+        </div>
+        <div class="card" style="padding:20px">
+          <div style="font-family:var(--font-display);font-weight:700;margin-bottom:14px">Transactions</div>
+          <div>
+            <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--wire)"><div style="width:36px;height:36px;background:var(--ink-3);border-radius:var(--r-sm);display:flex;align-items:center;justify-content:center">💳</div><div style="flex:1"><div style="font-size:0.875rem;font-weight:600">Coin Recharge</div><div style="font-size:0.72rem;color:var(--txt-3)">Mar 10</div></div><div style="font-weight:700;color:var(--mint)">+300 🪙</div></div>
+            <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--wire)"><div style="width:36px;height:36px;background:var(--ink-3);border-radius:var(--r-sm);display:flex;align-items:center;justify-content:center">👤</div><div style="flex:1"><div style="font-size:0.875rem;font-weight:600">Contact — Amit Kumar</div><div style="font-size:0.72rem;color:var(--txt-3)">Mar 8</div></div><div style="font-weight:700;color:var(--brand)">-20 🪙</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="card" style="padding:20px">
+        <div style="font-family:var(--font-display);font-weight:700;margin-bottom:16px">Earnings Overview</div>
+        <canvas id="wallet-earn-canvas" height="200"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- PROFILE -->
+  <div class="page" id="page-profile">
+    <div class="grid-2">
+      <div class="card" style="padding:24px">
+        <div style="text-align:center;margin-bottom:24px">
+          <div class="avatar avatar-2xl" style="background:linear-gradient(135deg,var(--mint),var(--sky));margin:0 auto 12px">AS</div>
+          <div style="font-family:var(--font-display);font-size:1.3rem;font-weight:700">Arjun Sharma</div>
+          <div style="color:var(--mint);font-size:0.82rem;font-weight:700;margin-top:3px">✓ Verified Trainer</div>
+          <div style="color:var(--gold);margin-top:4px;font-size:0.9rem">★★★★★ 4.9</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div class="grid-2" style="gap:10px">
+            <div class="input-group"><label>First Name</label><input class="input" value="Arjun"></div>
+            <div class="input-group"><label>Last Name</label><input class="input" value="Sharma"></div>
+          </div>
+          <div class="input-group"><label>Specialty</label><input class="input" value="Weight Loss & HIIT"></div>
+          <div class="input-group"><label>Experience</label><input class="input" value="8 years"></div>
+          <div class="input-group"><label>Session Price (₹)</label><input class="input" type="number" value="1200"></div>
+          <div class="input-group"><label>City</label><input class="input" value="Delhi"></div>
+          <div class="input-group"><label>About</label><textarea class="input" rows="3">Certified personal trainer specializing in weight loss and HIIT. Helped 200+ clients transform their bodies.</textarea></div>
+          <button class="btn btn-fire" onclick="showToast('Profile updated!','success')">Save Changes</button>
+        </div>
+      </div>
+      <div>
+        <div class="card" style="padding:20px;margin-bottom:14px">
+          <div style="font-family:var(--font-display);font-weight:700;margin-bottom:14px">Training Types</div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <label style="display:flex;align-items:center;gap:10px;cursor:pointer"><input type="checkbox" checked style="accent-color:var(--brand)"> Online (Zoom)</label>
+            <label style="display:flex;align-items:center;gap:10px;cursor:pointer"><input type="checkbox" checked style="accent-color:var(--brand)"> Home Visit</label>
+            <label style="display:flex;align-items:center;gap:10px;cursor:pointer"><input type="checkbox" style="accent-color:var(--brand)"> Gym Session</label>
+          </div>
+        </div>
+        <div class="card" style="padding:20px">
+          <div style="font-family:var(--font-display);font-weight:700;margin-bottom:14px">Upload Certification</div>
+          <div class="drop-zone" style="position:relative" onclick="showToast('Upload feature active! (demo)','info')">
+            <input type="file" accept=".pdf,.jpg,.png" style="opacity:0;position:absolute;inset:0;cursor:pointer">
+            <div style="font-size:2rem;margin-bottom:10px">📜</div>
+            <div style="font-weight:700;margin-bottom:4px">Drop certification here</div>
+            <div style="font-size:0.8rem;color:var(--txt-3)">ACE, NASM, ISSA etc. — PDF or Image</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  </div>
+</main>
+</div>
+
+<!-- MOBILE NAV -->
+<nav class="mobile-bottom-nav">
+  <button class="mob-nav-item active" onclick="showPage('overview',this)"><span class="mob-nav-icon">🏠</span>Home</button>
+  <button class="mob-nav-item" onclick="showPage('learners',this)"><span class="mob-nav-icon">👥</span>Learners</button>
+  <button class="mob-nav-item" onclick="showPage('bookings',this)"><span class="mob-nav-icon">📅</span>Bookings</button>
+  <button class="mob-nav-item" onclick="showPage('messages',this)"><span class="mob-nav-icon">💬</span>Chat</button>
+  <button class="mob-nav-item" onclick="showPage('wallet',this)"><span class="mob-nav-icon">🪙</span>Wallet</button>
+</nav>
+
+<!-- NOTIF MODAL -->
+<div class="modal-overlay" id="notif-modal">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">Notifications</div><button class="btn btn-ghost btn-sm" onclick="Modal.close('notif-modal')">✕</button></div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div style="padding:14px;background:rgba(0,229,160,0.08);border:1px solid rgba(0,229,160,0.2);border-radius:var(--r-md)"><div style="font-weight:700;font-size:0.88rem">📅 3 new booking requests</div><div style="font-size:0.78rem;color:var(--txt-2);margin-top:3px">Amit, Sneha and Rohan want sessions</div></div>
+      <div style="padding:14px;background:var(--ink-3);border:1px solid var(--wire-md);border-radius:var(--r-md)"><div style="font-weight:700;font-size:0.88rem">⭐ New review from Amit Kumar</div><div style="font-size:0.78rem;color:var(--txt-2);margin-top:3px">"Lost 6kg in 2 months — incredible trainer!"</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toast-container"></div>
+<script src="../assets/js/app.js"></script>
+<script>
+const Modal={open(id){document.getElementById(id)?.classList.add('active')},close(id){document.getElementById(id)?.classList.remove('active')}};
+document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('active')}));
+function toggleTheme(){document.body.classList.toggle('light');localStorage.setItem('theme',document.body.classList.contains('light')?'light':'dark')}
+if(localStorage.getItem('theme')==='light')document.body.classList.add('light');
+function showToast(msg,type='info'){const icons={success:'✓',error:'✕',info:'ℹ'};const c=document.getElementById('toast-container');const t=document.createElement('div');t.className=`toast toast-${type}`;t.innerHTML=`<span class="toast-icon">${icons[type]}</span><span>${msg}</span>`;c.appendChild(t);setTimeout(()=>{t.style.opacity='0';t.style.transform='translateX(20px)';setTimeout(()=>t.remove(),300)},3500)}
+function initiatePayment(a,p,cb){showToast('Processing…','info');setTimeout(()=>{showToast(`✓ ₹${a} paid for ${p}!`,'success');if(cb)cb()},1500)}
+
+// PAGE NAV
+const pageTitles={overview:'Dashboard',learners:'My Learners',bookings:'Bookings',calendar:'Calendar',attendance:'Attendance',messages:'Messages',wallet:'Wallet',profile:'My Profile'};
+function showPage(id,el){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item,.mob-nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  if(el)el.classList.add('active');
+  document.getElementById('page-title').textContent=pageTitles[id]||'Dashboard';
+  if(id==='calendar')renderTrainerCal();
+  if(id==='attendance')renderAtt();
+  if(id==='wallet')setTimeout(()=>drawEarningsChart('wallet-earn-canvas'),50);
+}
+
+// LEARNERS DATA
+const LEARNERS=[
+  {name:'Amit Kumar',goal:'Lose 10kg',progress:60,sessions:8,avatar:'AK',streak:12,coins:150,g:'linear-gradient(135deg,var(--sky),#8B5CF6)'},
+  {name:'Sneha Roy',goal:'Build strength',progress:35,sessions:3,avatar:'SR',streak:5,coins:85,g:'linear-gradient(135deg,#FFB800,#FF4500)'},
+  {name:'Rohan Verma',goal:'Marathon prep',progress:78,sessions:15,avatar:'RV',streak:21,coins:200,g:'linear-gradient(135deg,var(--mint),var(--sky))'},
+  {name:'Priya K.',goal:'Yoga & Flex',progress:45,sessions:6,avatar:'PK',streak:8,coins:120,g:'linear-gradient(135deg,#8B5CF6,#FF4500)'},
+];
+document.getElementById('learners-list').innerHTML=LEARNERS.map(l=>`
+  <div class="learner-row">
+    <div class="avatar avatar-md" style="background:${l.g}">${l.avatar}</div>
+    <div style="flex:1;min-width:0">
+      <div style="font-weight:700;margin-bottom:3px">${l.name}</div>
+      <div style="font-size:0.78rem;color:var(--txt-2);margin-bottom:8px">🎯 ${l.goal} · 🔥 ${l.streak} days · ${l.sessions} sessions</div>
+      <div style="max-width:220px">
+        <div class="flex-between" style="font-size:0.7rem;color:var(--txt-3);margin-bottom:4px"><span>Progress</span><span>${l.progress}%</span></div>
+        <div class="progress-bar"><div class="progress-fill" style="width:${l.progress}%"></div></div>
+      </div>
+    </div>
+    <div style="text-align:right;flex-shrink:0">
+      <div style="font-size:0.72rem;color:var(--txt-3);margin-bottom:8px"><span class="coin">${l.coins}</span></div>
+      <div style="display:flex;gap:6px">
+        <button class="btn btn-mint btn-sm" onclick="showPage('messages',null)">Chat</button>
+        <button class="btn btn-outline btn-sm">Progress</button>
+      </div>
+    </div>
+  </div>`).join('');
+
+// PENDING BOOKINGS
+const PENDINGS=[
+  {name:'Amit Kumar',type:'HIIT Session',date:'Mar 16 · 7:00 AM',mode:'Online',avatar:'AK',g:'linear-gradient(135deg,var(--sky),#8B5CF6)'},
+  {name:'Sneha Roy',type:'Strength Training',date:'Mar 17 · 6:00 PM',mode:'Home Visit',avatar:'SR',g:'linear-gradient(135deg,#FFB800,#FF4500)'},
+];
+function renderPending(containerId){
+  document.getElementById(containerId).innerHTML=PENDINGS.map((b,i)=>`
+    <div class="booking-req" id="breq-${i}">
+      <div class="avatar avatar-md" style="background:${b.g}">${b.avatar}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:700;font-size:0.875rem;margin-bottom:2px">${b.name}</div>
+        <div style="font-size:0.78rem;color:var(--txt-2)">${b.type} · ${b.date} · ${b.mode}</div>
+      </div>
+      <div style="display:flex;gap:6px;flex-shrink:0">
+        <button class="btn btn-mint btn-sm" onclick="acceptBooking(${i})">✓ Accept</button>
+        <button class="btn btn-ghost btn-sm" style="color:var(--brand)" onclick="rejectBooking(${i})">✕</button>
+      </div>
+    </div>`).join('');
+}
+renderPending('pending-list');
+
+// ALL BOOKINGS page
+document.getElementById('all-bookings').innerHTML=PENDINGS.map((b,i)=>`
+  <div class="booking-req">
+    <div class="avatar avatar-md" style="background:${b.g}">${b.avatar}</div>
+    <div style="flex:1"><div style="font-weight:700">${b.name} — ${b.type}</div><div style="font-size:0.8rem;color:var(--txt-2)">${b.date} · ${b.mode}</div></div>
+    <span class="badge badge-gold">Pending</span>
+    <button class="btn btn-mint btn-sm" onclick="acceptBooking(${i})">✓ Accept</button>
+    <button class="btn btn-ghost btn-sm" style="color:var(--brand)" onclick="rejectBooking(${i})">✕ Decline</button>
+  </div>`).join('');
+
+function acceptBooking(i){const el=document.getElementById('breq-'+i);if(el){el.style.opacity='.4';setTimeout(()=>el.remove(),600)}showToast(`Booking accepted! Zoom link sent 📧`,'success')}
+function rejectBooking(i){const el=document.getElementById('breq-'+i);if(el){el.style.opacity='.4';setTimeout(()=>el.remove(),600)}showToast('Booking declined','info')}
+
+// CALENDAR
+function renderTrainerCal(){
+  const sessions=[5,8,12,14,16,19,22,26],today=14;
+  const el=document.getElementById('trainer-cal');if(!el)return;
+  el.innerHTML=Array(3).fill('<div></div>').join('')+Array.from({length:31},(_,i)=>{
+    const d=i+1,isT=d===today,isS=sessions.includes(d);
+    return `<div class="cal-cell ${isT?'today':isS?'has-session':''}" onclick="showToast('${isS?'Session on Mar '+d:'No session — click to add'}','info')">${d}</div>`;
+  }).join('');
+}
+renderTrainerCal();
+
+// ATTENDANCE
+let attData=Array.from({length:31},(_,i)=>i<14?(Math.random()>.2?'present':'absent'):'');
+function renderAtt(){
+  const el=document.getElementById('att-grid');if(!el)return;
+  el.innerHTML=Array(3).fill('<div></div>').join('')+attData.map((s,i)=>`<div class="att-cell ${s}" onclick="toggleAtt(${i})">${s==='present'?'✓':s==='absent'?'✕':i+1}</div>`).join('');
+  const p=attData.filter(s=>s==='present').length,a=attData.filter(s=>s==='absent').length;
+  document.getElementById('att-p').textContent=p;
+  document.getElementById('att-a').textContent=a;
+  const rate=p+a>0?Math.round(p/(p+a)*100)+'%':'—';
+  document.getElementById('att-r').textContent=rate;
+  document.getElementById('att-rate-badge').textContent=rate+' attendance';
+}
+function toggleAtt(i){if(!attData[i])return;attData[i]=attData[i]==='present'?'absent':'present';renderAtt()}
+renderAtt();
+
+// EARNINGS CHART
+function drawEarningsChart(canvasId){
+  const canvas=document.getElementById(canvasId);if(!canvas)return;
+  const ctx=canvas.getContext('2d');
+  const W=canvas.width=canvas.parentElement.offsetWidth;
+  const H=canvas.height=canvas.height||90;
+  const data=[15000,18000,16500,22000,19000,24000,21000,26000,23000,28000,24000,30000];
+  const pad=20,max=Math.max(...data),min=Math.min(...data);
+  ctx.clearRect(0,0,W,H);
+  const pts=data.map((v,i)=>({x:pad+(i/(data.length-1))*(W-pad*2),y:H-pad-((v-min)/(max-min))*(H-pad*2)}));
+  const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'rgba(0,229,160,0.25)');g.addColorStop(1,'rgba(0,229,160,0)');
+  ctx.beginPath();ctx.moveTo(pts[0].x,pts[0].y);pts.forEach(p=>ctx.lineTo(p.x,p.y));
+  ctx.lineTo(pts[pts.length-1].x,H);ctx.lineTo(pts[0].x,H);ctx.fillStyle=g;ctx.fill();
+  ctx.beginPath();ctx.moveTo(pts[0].x,pts[0].y);pts.forEach(p=>ctx.lineTo(p.x,p.y));
+  ctx.strokeStyle='#00E5A0';ctx.lineWidth=2.5;ctx.stroke();
+  pts.forEach(p=>{ctx.beginPath();ctx.arc(p.x,p.y,4,0,Math.PI*2);ctx.fillStyle='#00E5A0';ctx.fill()});
+}
+document.addEventListener('DOMContentLoaded',()=>drawEarningsChart('earn-canvas'));
+window.addEventListener('resize',()=>drawEarningsChart('earn-canvas'));
+
+// MESSAGES
+function sendTrainerMsg(){
+  const input=document.getElementById('trainer-msg-input');
+  const text=input.value.trim();if(!text)return;
+  const body=document.getElementById('trainer-msg-body');
+  const now=new Date().toLocaleTimeString('en',{hour:'2-digit',minute:'2-digit'});
+  const d=document.createElement('div');d.style.cssText='align-self:flex-end;display:flex;flex-direction:column;align-items:flex-end';
+  d.innerHTML=`<div class="bubble bubble-out">${text}</div><div class="bubble-time" style="padding-right:4px">${now}</div>`;
+  body.appendChild(d);input.value='';body.scrollTop=body.scrollHeight;
+  setTimeout(()=>{const r=document.createElement('div');r.innerHTML=`<div class="bubble bubble-in">Thanks coach! 💪</div><div class="bubble-time" style="padding-left:4px">${now}</div>`;body.appendChild(r);body.scrollTop=body.scrollHeight},1000);
+}
+</script>
+</body>
+</html>
