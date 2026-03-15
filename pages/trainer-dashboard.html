@@ -1,0 +1,1017 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trainer Dashboard — FitPro</title>
+<link rel="stylesheet" href="../assets/css/ds.css">
+<style>
+.page    { display:none }
+.page.on { display:block }
+.srow    { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:22px }
+
+/* ── LEARNER ROW ─────────────────────── */
+.lr {
+  display:flex; align-items:center; gap:14px;
+  padding:16px 20px; background:var(--ink-2);
+  border:1px solid var(--wire); border-radius:var(--r-xl);
+  transition:all var(--dur);
+}
+.lr:hover { border-color:var(--wire-hi); transform:translateX(4px) }
+
+/* ── BOOKING REQUEST ─────────────────── */
+.breq {
+  display:flex; align-items:center; gap:14px;
+  padding:18px 20px; background:var(--ink-2);
+  border:1px solid var(--wire); border-radius:var(--r-xl);
+  transition:border-color var(--dur);
+}
+.breq:hover { border-color:var(--wire-hi) }
+
+/* ── CALENDAR ────────────────────────── */
+.cal-grid   { display:grid; grid-template-columns:repeat(7,1fr); gap:5px }
+.cal-hdr    { text-align:center; font-size:.62rem; font-weight:700; color:var(--txt-3); padding:4px; text-transform:uppercase }
+.cal-day    { aspect-ratio:1; display:flex; align-items:center; justify-content:center; border-radius:7px; font-size:.78rem; cursor:pointer; transition:all .2s; border:1px solid transparent; color:var(--txt-3) }
+.cal-day:hover    { background:var(--wire) }
+.cal-day.sess     { background:var(--brand-dim); border-color:rgba(255,69,0,.3); color:var(--brand); font-weight:700 }
+.cal-day.today    { background:var(--brand); border-color:var(--brand); color:#fff; font-weight:700 }
+.cal-day.empty    { pointer-events:none; opacity:0 }
+
+/* ── ATTENDANCE ──────────────────────── */
+.att-grid   { display:grid; grid-template-columns:repeat(7,1fr); gap:5px }
+.att-cell   { aspect-ratio:1; border-radius:6px; border:1px solid var(--wire); display:flex; align-items:center; justify-content:center; font-size:.72rem; font-weight:700; cursor:pointer; transition:all .2s; color:var(--txt-3) }
+.att-cell:hover   { border-color:var(--brand) }
+.att-cell.present { background:rgba(0,229,160,.18); border-color:rgba(0,229,160,.35); color:var(--mint) }
+.att-cell.absent  { background:rgba(255,69,0,.12); border-color:rgba(255,69,0,.25); color:var(--brand) }
+
+/* ── MESSAGES ────────────────────────── */
+.msg-layout { display:grid; grid-template-columns:260px 1fr; height:calc(100vh - 170px); min-height:400px; border:1px solid var(--wire); border-radius:var(--r-xl); overflow:hidden }
+.msg-list   { background:var(--ink-1); border-right:1px solid var(--wire); overflow-y:auto; display:flex; flex-direction:column }
+.msg-item   { padding:13px 15px; cursor:pointer; border-bottom:1px solid var(--wire); transition:background var(--df) }
+.msg-item:hover { background:var(--wire) }
+.msg-item.on    { background:rgba(0,229,160,.08); border-left:2px solid var(--mint) }
+.msg-preview    { font-size:.72rem; color:var(--txt-3); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:2px }
+.msg-main   { display:flex; flex-direction:column; background:var(--ink) }
+.msg-top    { padding:13px 18px; border-bottom:1px solid var(--wire); display:flex; align-items:center; gap:12px; flex-shrink:0 }
+.msg-body   { flex:1; overflow-y:auto; padding:18px; display:flex; flex-direction:column; gap:12px }
+.bbl        { max-width:68%; padding:10px 15px; border-radius:18px; font-size:.875rem; line-height:1.55 }
+.bbl-in     { background:var(--ink-2); border:1px solid var(--wire); border-radius:18px 18px 18px 4px; align-self:flex-start }
+.bbl-out    { background:var(--mint); color:#000; border-radius:18px 18px 4px 18px; align-self:flex-end }
+.bbl-time   { font-size:.65rem; color:var(--txt-3); margin-top:3px }
+.msg-input-row { padding:13px 18px; border-top:1px solid var(--wire); display:flex; gap:10px; flex-shrink:0 }
+
+/* ── WALLET ──────────────────────────── */
+.wallet-hero { background:linear-gradient(135deg,rgba(0,229,160,.12),rgba(56,191,255,.06)); border:1px solid rgba(0,229,160,.2); border-radius:var(--r-2xl); padding:28px; position:relative; overflow:hidden; margin-bottom:16px }
+.wh-glow     { position:absolute; right:-60px; top:-60px; width:200px; height:200px; border-radius:50%; background:radial-gradient(circle,rgba(0,229,160,.2),transparent); pointer-events:none }
+.wh-bal      { font-family:var(--fd); font-size:3.5rem; font-weight:800; color:var(--gold); line-height:1 }
+
+/* ── NOTICE CARD ─────────────────────── */
+.notice-card { background:linear-gradient(135deg,rgba(255,184,0,.08),var(--ink-2)); border:1px solid rgba(255,184,0,.18); border-radius:var(--r-xl); padding:20px }
+.notice-item { padding:13px; background:rgba(0,0,0,.2); border-radius:var(--r-md); margin-bottom:8px }
+.notice-item:last-child { margin-bottom:0 }
+
+/* ── DROP ZONE ───────────────────────── */
+.dropzone { border:2px dashed var(--wire-md); border-radius:var(--r-xl); padding:40px; text-align:center; cursor:pointer; transition:all var(--dur); position:relative }
+.dropzone:hover { border-color:var(--brand); background:var(--brand-dim) }
+.dropzone input[type=file] { position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100% }
+
+/* ── UPLOAD PROGRESS ─────────────────── */
+.upload-item { display:flex; align-items:center; gap:12px; padding:12px; background:var(--ink-3); border-radius:var(--r-md); margin-bottom:8px }
+.up-bar      { flex:1; height:5px; background:var(--wire-md); border-radius:3px; overflow:hidden }
+.up-fill     { height:100%; background:var(--mint); border-radius:3px; transition:width .4s var(--ease) }
+
+/* ── EXERCISE ROW ────────────────────── */
+.ex-row { display:grid; grid-template-columns:2fr 80px 80px 80px auto; gap:8px; align-items:center; margin-bottom:8px }
+
+/* ── NOTIF BTN ───────────────────────── */
+.notif-btn { position:relative; width:40px; height:40px; background:var(--ink-3); border:1px solid var(--wire-md); border-radius:var(--r-sm); display:flex; align-items:center; justify-content:center; font-size:1.1rem; cursor:pointer; transition:background var(--df) }
+.notif-btn:hover { background:var(--ink-4) }
+.notif-dot { position:absolute; top:7px; right:7px; width:8px; height:8px; border-radius:50%; background:var(--brand); border:2px solid var(--ink) }
+
+/* ── LEARNER PROGRESS BAR ────────────── */
+.lp { display:flex; align-items:center; gap:10px; margin-bottom:5px }
+.lp-name { font-size:.82rem; font-weight:600; min-width:80px }
+.lp-bar  { flex:1; height:6px; background:var(--wire-md); border-radius:3px; overflow:hidden }
+.lp-fill { height:100%; border-radius:3px; background:linear-gradient(90deg,var(--mint),#00c47a); transition:width .6s var(--ease) }
+
+/* ── RESPONSIVE ──────────────────────── */
+@media(max-width:768px) { .srow { grid-template-columns:1fr 1fr }; .msg-layout { grid-template-columns:1fr; height:auto }; .msg-list { display:none }; .ex-row { grid-template-columns:1fr 1fr 1fr auto; gap:6px } }
+@media(max-width:480px) { .srow { gap:10px }; .ex-row { grid-template-columns:1fr 1fr; gap:6px } }
+</style>
+</head>
+<body>
+<div class="dl">
+
+<!-- ════════ SIDEBAR ════════ -->
+<aside class="sb" id="sidebar">
+  <div class="sb-logo">
+    <a href="../index.html"><div class="sb-mark">💪</div> FitPro</a>
+  </div>
+  <div class="sb-sec">Overview</div>
+  <button class="ni on" onclick="nav('overview',this)"><span class="ni-icon">🏠</span> Dashboard</button>
+  <button class="ni"    onclick="nav('learners',this)"><span class="ni-icon">👥</span> My Learners</button>
+  <button class="ni"    onclick="nav('bookings',this)">
+    <span class="ni-icon">📅</span> Bookings
+    <span class="badge b-fire" style="margin-left:auto;font-size:.6rem">3</span>
+  </button>
+  <div class="sb-sec">Manage</div>
+  <button class="ni" onclick="nav('calendar',this)"><span class="ni-icon">🗓️</span> Calendar</button>
+  <button class="ni" onclick="nav('attendance',this)"><span class="ni-icon">✅</span> Attendance</button>
+  <button class="ni" onclick="nav('uploads',this)"><span class="ni-icon">📤</span> Upload Content</button>
+  <div class="sb-sec">Grow</div>
+  <button class="ni" onclick="nav('messages',this)">
+    <span class="ni-icon">💬</span> Messages
+    <span class="badge b-mint" style="margin-left:auto;font-size:.6rem">2</span>
+  </button>
+  <button class="ni" onclick="nav('wallet',this)"><span class="ni-icon">🪙</span> Wallet</button>
+  <button class="ni" onclick="nav('profile',this)"><span class="ni-icon">👤</span> My Profile</button>
+  <a class="ni" href="../index.html"><span class="ni-icon">🚪</span> Logout</a>
+
+  <div class="sb-foot">
+    <div class="sb-user" onclick="nav('profile',null)">
+      <div class="av av-md" style="background:linear-gradient(135deg,#00E5A0,#38BFFF)">AS</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:.85rem;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Arjun Sharma</div>
+        <div style="font-size:.7rem;color:var(--mint)">✓ Verified Trainer</div>
+      </div>
+      <button onclick="event.stopPropagation();Theme.toggle()" style="background:none;border:none;font-size:.9rem;color:var(--txt-3);cursor:pointer;padding:4px;flex-shrink:0">🌙</button>
+    </div>
+  </div>
+</aside>
+
+<!-- ════════ MAIN ════════ -->
+<main class="main">
+  <div class="topbar">
+    <div>
+      <div class="tb-title" id="page-title">Dashboard</div>
+      <div class="tb-sub">Good morning, Arjun 💪 · Wednesday, 14 March</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <div class="notif-btn" onclick="Modal.open('notif-modal')">🔔<span class="notif-dot"></span></div>
+      <button class="btn btn-icon btn-ghost" id="sb-toggle" style="font-size:1.2rem;display:none">☰</button>
+    </div>
+  </div>
+
+  <div class="db">
+
+  <!-- ══════════════ OVERVIEW ══════════════ -->
+  <div class="page on" id="pg-overview">
+    <div class="srow">
+      <div class="sw">
+        <div style="font-size:1.1rem;margin-bottom:6px">🪙</div>
+        <div class="sw-val t-gold">280</div>
+        <div class="sw-lbl">Coin Wallet</div>
+        <div class="sw-chg" style="color:var(--txt-3)">Recharge to contact</div>
+      </div>
+      <div class="sw">
+        <div style="font-size:1.1rem;margin-bottom:6px">👥</div>
+        <div class="sw-val">12</div>
+        <div class="sw-lbl">Active Learners</div>
+        <div class="sw-chg up">↑ 2 this month</div>
+      </div>
+      <div class="sw">
+        <div style="font-size:1.1rem;margin-bottom:6px">💰</div>
+        <div class="sw-val" style="color:var(--mint)">₹24K</div>
+        <div class="sw-lbl">Monthly Earnings</div>
+        <div class="sw-chg up">↑ 22% vs last month</div>
+      </div>
+      <div class="sw">
+        <div style="font-size:1.1rem;margin-bottom:6px">⭐</div>
+        <div class="sw-val t-gold">4.9</div>
+        <div class="sw-lbl">Avg Rating</div>
+        <div class="sw-chg up">128 reviews</div>
+      </div>
+    </div>
+
+    <div class="g2" style="margin-bottom:20px">
+      <!-- Pending bookings -->
+      <div class="card card-sm">
+        <div class="fb" style="margin-bottom:14px">
+          <div style="font-family:var(--fd);font-weight:700">Pending Requests</div>
+          <span class="badge b-fire">3 new</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px" id="pending-list"></div>
+      </div>
+
+      <!-- Notice board -->
+      <div class="notice-card">
+        <div style="font-family:var(--fd);font-weight:700;margin-bottom:14px;color:var(--gold)">📢 Notice Board</div>
+        <div class="notice-item">
+          <div style="font-size:.85rem;font-weight:700;margin-bottom:3px">Platform Maintenance</div>
+          <div style="font-size:.78rem;color:var(--txt-2)">Sunday 2–4 AM IST. No bookings during this window.</div>
+        </div>
+        <div class="notice-item">
+          <div style="font-size:.85rem;font-weight:700;margin-bottom:3px">New: Diet Plan Uploads</div>
+          <div style="font-size:.78rem;color:var(--txt-2)">Upload PDF diet charts directly from the Uploads section.</div>
+        </div>
+        <div class="notice-item">
+          <div style="font-size:.85rem;font-weight:700;margin-bottom:3px">Coin Bonus Week</div>
+          <div style="font-size:.78rem;color:var(--txt-2)">Recharge this week and get 20% bonus coins on all packs!</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Earnings chart -->
+    <div class="card card-sm" style="margin-bottom:20px">
+      <div class="fb" style="margin-bottom:14px">
+        <div style="font-family:var(--fd);font-weight:700">Earnings — 2024</div>
+        <span class="badge b-mint">↑ 22% vs last month</span>
+      </div>
+      <canvas id="earn-canvas" height="100"></canvas>
+      <div style="display:flex;gap:24px;margin-top:12px;flex-wrap:wrap;font-size:.78rem">
+        <span style="color:var(--txt-2)">This Month: <strong style="color:var(--mint)">₹24,000</strong></span>
+        <span style="color:var(--txt-2)">Last Month: <strong>₹19,600</strong></span>
+        <span style="color:var(--txt-2)">Total 2024: <strong style="color:var(--gold)">₹1,18,400</strong></span>
+      </div>
+    </div>
+
+    <!-- Learner progress -->
+    <div class="card card-sm">
+      <div class="fb" style="margin-bottom:14px">
+        <div style="font-family:var(--fd);font-weight:700">Learner Progress</div>
+        <button class="btn btn-outline btn-sm" onclick="nav('learners',null)">View All</button>
+      </div>
+      <div id="ov-progress"></div>
+    </div>
+  </div>
+
+  <!-- ══════════════ MY LEARNERS ══════════════ -->
+  <div class="page" id="pg-learners">
+    <div style="display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap">
+      <input class="input" placeholder="🔍  Search learners…" id="l-search" oninput="searchLearners(this.value)" style="max-width:320px">
+      <span class="badge b-mint" style="align-self:center">12 Active</span>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px" id="learners-list"></div>
+  </div>
+
+  <!-- ══════════════ BOOKINGS ══════════════ -->
+  <div class="page" id="pg-bookings">
+    <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap" id="bk-tabs">
+      <button class="btn btn-fire btn-sm"    onclick="filterBk('pending',this)">Pending (3)</button>
+      <button class="btn btn-outline btn-sm" onclick="filterBk('upcoming',this)">Upcoming</button>
+      <button class="btn btn-outline btn-sm" onclick="filterBk('completed',this)">Completed</button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px" id="all-bookings"></div>
+  </div>
+
+  <!-- ══════════════ CALENDAR ══════════════ -->
+  <div class="page" id="pg-calendar">
+    <div class="g2">
+      <div class="card card-sm">
+        <div class="fb" style="margin-bottom:14px">
+          <div style="font-family:var(--fd);font-weight:700">March 2024</div>
+          <div style="display:flex;gap:6px">
+            <button class="btn btn-ghost btn-xs" onclick="Toast.show('Previous month','info')">←</button>
+            <button class="btn btn-ghost btn-xs" onclick="Toast.show('Next month','info')">→</button>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:6px">
+          ${['S','M','T','W','T','F','S'].map(d=>`<div class="cal-hdr">${d}</div>`).join('')}
+        </div>
+        <div class="cal-grid" id="trainer-cal"></div>
+        <div style="margin-top:12px;display:flex;gap:14px;font-size:.75rem;flex-wrap:wrap">
+          <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;background:var(--brand-dim);border:1px solid rgba(255,69,0,.3);border-radius:3px;display:inline-block"></span> Session</span>
+          <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;background:var(--brand);border-radius:3px;display:inline-block"></span> Today</span>
+        </div>
+      </div>
+
+      <div class="card card-sm">
+        <div style="font-family:var(--fd);font-weight:700;margin-bottom:16px">Set Availability</div>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div class="ig"><label>Date</label><input type="date" class="input" id="avail-date"></div>
+          <div class="ig"><label>Available Slots</label><input class="input" id="avail-slots" placeholder="e.g. 7AM, 8AM, 9AM, 6PM"></div>
+          <div class="ig">
+            <label>Session Type</label>
+            <div style="display:flex;gap:14px;margin-top:6px;flex-wrap:wrap">
+              <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:.875rem"><input type="checkbox" checked style="accent-color:var(--brand)"> Online</label>
+              <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:.875rem"><input type="checkbox" style="accent-color:var(--brand)"> Home Visit</label>
+            </div>
+          </div>
+          <div class="ig"><label>Notes (optional)</label><input class="input" placeholder="e.g. Available after 6PM only"></div>
+          <button class="btn btn-mint btn-md" onclick="saveAvailability()">Save Availability ✓</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════ ATTENDANCE ══════════════ -->
+  <div class="page" id="pg-attendance">
+    <div style="margin-bottom:18px;display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+      <select class="input" style="max-width:240px" id="att-learner" onchange="renderAtt()">
+        <option>Amit Kumar</option>
+        <option>Sneha Roy</option>
+        <option>Rohan Verma</option>
+        <option>Priya Das</option>
+      </select>
+      <span class="badge b-mint" id="att-rate-badge">—</span>
+    </div>
+    <div class="card card-sm">
+      <div style="font-family:var(--fd);font-weight:700;margin-bottom:4px">March 2024 Attendance</div>
+      <div style="font-size:.8rem;color:var(--txt-3);margin-bottom:16px">Tap a cell to mark present ✓ or absent ✕</div>
+      <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:6px">
+        ${['S','M','T','W','T','F','S'].map(d=>`<div class="cal-hdr">${d}</div>`).join('')}
+      </div>
+      <div class="att-grid" id="att-grid"></div>
+      <div style="margin-top:14px;display:flex;gap:20px;flex-wrap:wrap;font-size:.82rem">
+        <span style="color:var(--mint)">✓ Present: <strong id="att-p">0</strong></span>
+        <span style="color:var(--brand)">✕ Absent: <strong id="att-a">0</strong></span>
+        <span style="color:var(--txt-2)">Rate: <strong id="att-r">—</strong></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════ UPLOADS ══════════════ -->
+  <div class="page" id="pg-uploads">
+    <div class="g2">
+      <div>
+        <!-- Workout Builder -->
+        <div class="card card-sm" style="margin-bottom:14px">
+          <div class="fb" style="margin-bottom:14px">
+            <div style="font-family:var(--fd);font-weight:700">Build Workout Plan</div>
+            <select class="input" style="max-width:180px" id="workout-learner">
+              <option>Amit Kumar</option><option>Sneha Roy</option><option>Rohan Verma</option>
+            </select>
+          </div>
+          <div class="ig" style="margin-bottom:12px">
+            <label>Plan Title</label>
+            <input class="input" id="plan-title" placeholder="e.g. Week 4 — Upper Body Strength">
+          </div>
+          <!-- Exercise table header -->
+          <div class="ex-row" style="margin-bottom:6px">
+            <div style="font-size:.68rem;font-weight:700;color:var(--txt-3);letter-spacing:.08em;text-transform:uppercase">Exercise</div>
+            <div style="font-size:.68rem;font-weight:700;color:var(--txt-3);letter-spacing:.08em;text-transform:uppercase">Sets</div>
+            <div style="font-size:.68rem;font-weight:700;color:var(--txt-3);letter-spacing:.08em;text-transform:uppercase">Reps</div>
+            <div style="font-size:.68rem;font-weight:700;color:var(--txt-3);letter-spacing:.08em;text-transform:uppercase">Rest</div>
+            <div></div>
+          </div>
+          <div id="exercise-rows"></div>
+          <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+            <button class="btn btn-outline btn-sm" onclick="addExRow()">+ Add Exercise</button>
+            <button class="btn btn-mint btn-sm" onclick="saveWorkoutPlan()">Save &amp; Send to Learner</button>
+          </div>
+        </div>
+
+        <!-- Diet Plan Builder -->
+        <div class="card card-sm">
+          <div class="fb" style="margin-bottom:14px">
+            <div style="font-family:var(--fd);font-weight:700">Diet Plan</div>
+            <select class="input" style="max-width:180px">
+              <option>Amit Kumar</option><option>Sneha Roy</option>
+            </select>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:9px" id="diet-builder"></div>
+          <button class="btn btn-mint btn-sm" style="margin-top:10px" onclick="saveDietPlan()">Save &amp; Send Diet Plan</button>
+        </div>
+      </div>
+
+      <!-- File upload -->
+      <div>
+        <div class="card card-sm" style="margin-bottom:14px">
+          <div style="font-family:var(--fd);font-weight:700;margin-bottom:14px">Upload Files</div>
+          <div style="margin-bottom:12px">
+            <div class="ig" style="margin-bottom:10px">
+              <label>File Type</label>
+              <select class="input" id="file-type">
+                <option value="video">🎥 Exercise Video</option>
+                <option value="pdf">📄 Diet / Workout PDF</option>
+                <option value="image">🖼️ Progress Image</option>
+              </select>
+            </div>
+            <div class="ig">
+              <label>Assign to Learner</label>
+              <select class="input" id="file-learner">
+                <option>All Learners</option>
+                <option>Amit Kumar</option><option>Sneha Roy</option><option>Rohan Verma</option>
+              </select>
+            </div>
+          </div>
+          <div class="dropzone" onclick="triggerUpload()">
+            <input type="file" id="file-input" multiple accept="video/*,.pdf,image/*" onchange="handleFiles(this.files)">
+            <div style="font-size:2.5rem;margin-bottom:10px">📁</div>
+            <div style="font-weight:700;margin-bottom:4px">Drop files here or click to browse</div>
+            <div style="font-size:.8rem;color:var(--txt-3)">Videos, PDFs, Images · Max 50MB each</div>
+          </div>
+          <div id="upload-queue" style="margin-top:12px"></div>
+        </div>
+
+        <!-- Uploaded library -->
+        <div class="card card-sm">
+          <div style="font-family:var(--fd);font-weight:700;margin-bottom:14px">Your Library</div>
+          <div style="display:flex;flex-direction:column;gap:8px" id="lib-list"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════ MESSAGES ══════════════ -->
+  <div class="page" id="pg-messages">
+    <div class="msg-layout">
+      <div class="msg-list">
+        <div style="padding:11px 13px;border-bottom:1px solid var(--wire)">
+          <input class="input" placeholder="Search…" style="font-size:.82rem;padding:8px 12px">
+        </div>
+        <div class="msg-item on" id="chat-amit" onclick="openChat('amit',this)">
+          <div style="display:flex;align-items:center;gap:10px">
+            <div class="av av-sm" style="background:linear-gradient(135deg,#38BFFF,#8B5CF6)">AK</div>
+            <div style="flex:1;min-width:0"><div style="font-weight:700;font-size:.85rem">Amit Kumar</div><div class="msg-preview">Yes sir! Ready 🔥</div></div>
+            <div style="font-size:.65rem;color:var(--txt-3)">2m</div>
+          </div>
+        </div>
+        <div class="msg-item" id="chat-sneha" onclick="openChat('sneha',this)">
+          <div style="display:flex;align-items:center;gap:10px">
+            <div class="av av-sm" style="background:linear-gradient(135deg,#FFB800,#FF4500)">SR</div>
+            <div style="flex:1;min-width:0"><div style="font-weight:700;font-size:.85rem">Sneha Roy</div><div class="msg-preview">Can we reschedule?</div></div>
+            <div style="font-size:.65rem;color:var(--txt-3)">1h</div>
+          </div>
+        </div>
+        <div class="msg-item" id="chat-rohan" onclick="openChat('rohan',this)">
+          <div style="display:flex;align-items:center;gap:10px">
+            <div class="av av-sm" style="background:linear-gradient(135deg,#00E5A0,#38BFFF)">RV</div>
+            <div style="flex:1;min-width:0"><div style="font-weight:700;font-size:.85rem">Rohan Verma</div><div class="msg-preview">PR on deadlift! 142kg 🏆</div></div>
+            <div style="font-size:.65rem;color:var(--txt-3)">3h</div>
+          </div>
+        </div>
+      </div>
+      <div class="msg-main">
+        <div class="msg-top">
+          <div class="av av-sm" id="chat-av" style="background:linear-gradient(135deg,#38BFFF,#8B5CF6)">AK</div>
+          <div><div style="font-weight:700;font-size:.9rem" id="chat-name">Amit Kumar</div><div style="font-size:.7rem;color:var(--mint)" id="chat-status">● Online</div></div>
+          <div style="margin-left:auto;display:flex;gap:8px">
+            <button class="btn btn-ghost btn-icon" onclick="Toast.show('Video call coming soon!','info')">📹</button>
+            <button class="btn btn-ghost btn-icon" onclick="Toast.show('Voice call coming soon!','info')">📞</button>
+          </div>
+        </div>
+        <div class="msg-body" id="msg-body">
+          <div style="align-self:center;font-size:.72rem;color:var(--txt-3);padding:5px 14px;background:var(--ink-2);border-radius:var(--r-pill)">Today</div>
+          <div><div class="bbl bbl-in">Good morning sir! Ready for today's session 🔥</div><div class="bbl-time" style="padding-left:4px">7:00 AM</div></div>
+          <div style="align-self:flex-end;display:flex;flex-direction:column;align-items:flex-end"><div class="bbl bbl-out">Perfect! Join Zoom in 5. Focus on form today — no ego lifting.</div><div class="bbl-time" style="padding-right:4px">7:01 AM</div></div>
+          <div><div class="bbl bbl-in">That was intense! Best session yet 💪</div><div class="bbl-time" style="padding-left:4px">8:06 AM</div></div>
+          <div style="align-self:flex-end;display:flex;flex-direction:column;align-items:flex-end"><div class="bbl bbl-out">Great effort! Protein within 30 mins. Rest well tonight 🥗</div><div class="bbl-time" style="padding-right:4px">8:08 AM</div></div>
+        </div>
+        <div class="msg-input-row">
+          <input class="input" placeholder="Message Amit…" id="msg-input" style="flex:1" onkeydown="if(event.key==='Enter')sendMsg()">
+          <button class="btn btn-mint btn-sm" onclick="sendMsg()">Send</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════ WALLET ══════════════ -->
+  <div class="page" id="pg-wallet">
+    <div class="g2">
+      <div>
+        <div class="wallet-hero">
+          <div class="wh-glow"></div>
+          <div style="position:relative">
+            <div style="font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--txt-3);margin-bottom:6px">Coin Wallet</div>
+            <div class="wh-bal">280 🪙</div>
+            <div style="font-size:.82rem;color:var(--txt-2);margin-top:6px">Use coins to contact new learners</div>
+            <button class="btn btn-fire" style="margin-top:16px" onclick="rechargeTrainerCoins()">+ Recharge Coins</button>
+          </div>
+        </div>
+        <div class="card card-sm">
+          <div style="font-family:var(--fd);font-weight:700;margin-bottom:14px">Recharge Packs</div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:13px;background:var(--ink-3);border-radius:var(--r-md)">
+              <div><div style="font-weight:700;font-size:.88rem">🪙 100 Coins</div><div style="font-size:.72rem;color:var(--txt-3)">Contact ~5 learners</div></div>
+              <button class="btn btn-outline btn-sm" onclick="buyTrainerCoins(499,100)">₹499</button>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:13px;background:rgba(0,229,160,.08);border:1px solid rgba(0,229,160,.18);border-radius:var(--r-md)">
+              <div><div style="font-weight:700;font-size:.88rem">🪙 300 Coins <span class="badge b-mint" style="font-size:.58rem;vertical-align:middle">Best</span></div><div style="font-size:.72rem;color:var(--txt-3)">Contact ~15 learners</div></div>
+              <button class="btn btn-mint btn-sm" onclick="buyTrainerCoins(999,300)">₹999</button>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:13px;background:var(--ink-3);border-radius:var(--r-md)">
+              <div><div style="font-weight:700;font-size:.88rem">🪙 700 Coins</div><div style="font-size:.72rem;color:var(--txt-3)">Contact ~35 learners</div></div>
+              <button class="btn btn-outline btn-sm" onclick="buyTrainerCoins(1999,700)">₹1999</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="card card-sm" style="margin-bottom:14px">
+          <div style="font-family:var(--fd);font-weight:700;margin-bottom:14px">Earnings Chart</div>
+          <canvas id="wallet-earn" height="160"></canvas>
+        </div>
+        <div class="card card-sm">
+          <div style="font-family:var(--fd);font-weight:700;margin-bottom:14px">Transactions</div>
+          <div id="wallet-tx"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════ PROFILE ══════════════ -->
+  <div class="page" id="pg-profile">
+    <div class="g2">
+      <div class="card card-sm">
+        <div style="text-align:center;margin-bottom:22px">
+          <div class="av av-2xl" style="background:linear-gradient(135deg,#00E5A0,#38BFFF);margin:0 auto 12px">AS</div>
+          <div style="font-family:var(--fd);font-size:1.3rem;font-weight:700">Arjun Sharma</div>
+          <div style="color:var(--mint);font-size:.82rem;font-weight:700;margin-top:3px">✓ Verified Trainer</div>
+          <div style="color:var(--gold);margin-top:4px;font-size:.9rem">★★★★★ 4.9 (128 reviews)</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div class="fg2" style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div class="ig"><label>First Name</label><input class="input" value="Arjun" id="p-fname"></div>
+            <div class="ig"><label>Last Name</label><input class="input" value="Sharma" id="p-lname"></div>
+          </div>
+          <div class="ig"><label>Specialty</label><input class="input" value="Weight Loss &amp; HIIT" id="p-spec"></div>
+          <div class="ig"><label>Experience</label><input class="input" value="8 years" id="p-exp"></div>
+          <div class="ig"><label>Session Price (₹)</label><input class="input" type="number" value="1200" id="p-price"></div>
+          <div class="ig"><label>City</label><input class="input" value="Delhi" id="p-city"></div>
+          <div class="ig"><label>About</label><textarea class="input" rows="3" id="p-about">Certified NASM personal trainer with 8+ years experience. Helped 200+ clients transform with sustainable fat loss and HIIT programming.</textarea></div>
+          <button class="btn btn-fire" onclick="saveProfile()">Save Changes</button>
+        </div>
+      </div>
+      <div>
+        <div class="card card-sm" style="margin-bottom:14px">
+          <div style="font-family:var(--fd);font-weight:700;margin-bottom:14px">Training Types</div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <label style="display:flex;align-items:center;gap:10px;cursor:pointer"><input type="checkbox" checked style="accent-color:var(--brand)"> Online (Zoom)</label>
+            <label style="display:flex;align-items:center;gap:10px;cursor:pointer"><input type="checkbox" checked style="accent-color:var(--brand)"> Home Visit</label>
+            <label style="display:flex;align-items:center;gap:10px;cursor:pointer"><input type="checkbox" style="accent-color:var(--brand)"> Gym Session</label>
+          </div>
+        </div>
+        <div class="card card-sm">
+          <div style="font-family:var(--fd);font-weight:700;margin-bottom:14px">Upload Certification</div>
+          <div class="dropzone" onclick="Toast.show('Upload feature active! Add Supabase storage keys.','info')">
+            <div style="font-size:2rem;margin-bottom:10px">📜</div>
+            <div style="font-weight:700;margin-bottom:4px">Drop certificate here</div>
+            <div style="font-size:.8rem;color:var(--txt-3)">NASM, ACE, ISSA, etc. — PDF or Image</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  </div><!-- /db -->
+</main>
+</div>
+
+<!-- ════ MOBILE BOTTOM NAV ════ -->
+<nav class="mob-nav">
+  <button class="mn-item on" onclick="nav('overview',this)"><span class="mn-icon">🏠</span>Home</button>
+  <button class="mn-item"    onclick="nav('learners',this)"><span class="mn-icon">👥</span>Learners</button>
+  <button class="mn-item"    onclick="nav('bookings',this)"><span class="mn-icon">📅</span>Bookings</button>
+  <button class="mn-item"    onclick="nav('messages',this)"><span class="mn-icon">💬</span>Chat</button>
+  <button class="mn-item"    onclick="nav('wallet',this)"><span class="mn-icon">🪙</span>Wallet</button>
+  <button class="mn-item"    onclick="nav('uploads',this)"><span class="mn-icon">📤</span>Upload</button>
+</nav>
+
+<!-- ════ MODALS ════ -->
+<div class="moverlay" id="notif-modal">
+  <div class="modal">
+    <div class="mhead"><div class="mtitle">Notifications</div><button class="btn btn-icon btn-ghost" onclick="Modal.close('notif-modal')" style="font-size:1rem">✕</button></div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div style="padding:13px;background:var(--brand-dim);border:1px solid rgba(255,69,0,.2);border-radius:var(--r-md)">
+        <div style="font-size:.88rem;font-weight:700;margin-bottom:3px">📅 3 new booking requests</div>
+        <div style="font-size:.78rem;color:var(--txt-2)">Amit, Sneha and Rohan want to book sessions</div>
+      </div>
+      <div style="padding:13px;background:var(--ink-3);border:1px solid var(--wire-md);border-radius:var(--r-md)">
+        <div style="font-size:.88rem;font-weight:700;margin-bottom:3px">⭐ New review from Amit Kumar</div>
+        <div style="font-size:.78rem;color:var(--txt-2)">"Lost 6kg in 2 months — incredible trainer!"</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="moverlay" id="learner-detail-modal">
+  <div class="modal">
+    <div class="mhead"><div class="mtitle" id="ld-title">Learner Details</div><button class="btn btn-icon btn-ghost" onclick="Modal.close('learner-detail-modal')" style="font-size:1rem">✕</button></div>
+    <div id="ld-body"></div>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toast-wrap"></div>
+
+<script src="../assets/js/core.js"></script>
+<script src="../assets/js/supabase.js"></script>
+<script src="../assets/js/zoom.js"></script>
+<script src="../assets/js/razorpay.js"></script>
+<script src="../assets/js/notifications.js"></script>
+<script>
+
+// ── PAGE NAV ─────────────────────────────────────
+const PAGE_TITLES = {
+  overview:'Dashboard', learners:'My Learners', bookings:'Bookings',
+  calendar:'Calendar', attendance:'Attendance', uploads:'Upload Content',
+  messages:'Messages', wallet:'Wallet', profile:'My Profile'
+};
+function nav(id, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('on'));
+  document.querySelectorAll('.ni, .mn-item').forEach(n => n.classList.remove('on'));
+  document.getElementById('pg-'+id)?.classList.add('on');
+  if (el) el.classList.add('on');
+  document.getElementById('page-title').textContent = PAGE_TITLES[id] || 'Dashboard';
+  if (id==='calendar')   renderTrainerCal();
+  if (id==='attendance') renderAtt();
+  if (id==='wallet')     setTimeout(()=>drawChart(document.getElementById('wallet-earn'), [18000,19200,17800,21000,20000,24000], '#00E5A0'), 60);
+}
+document.addEventListener('DOMContentLoaded',()=>{
+  const tog=document.getElementById('sb-toggle');
+  if(window.innerWidth<=768) tog.style.display='flex';
+  window.addEventListener('resize',()=>{ tog.style.display=window.innerWidth<=768?'flex':'none'; });
+  renderEarnChart();
+});
+
+// ── DEMO LEARNERS ────────────────────────────────
+const MY_LEARNERS = [
+  { name:'Amit Kumar',  avatar:'AK', goal:'Lose 10kg',     progress:60, sessions:8,  streak:12, coins:150, grad:'linear-gradient(135deg,#38BFFF,#8B5CF6)', lastSeen:'Today' },
+  { name:'Sneha Roy',   avatar:'SR', goal:'Build strength', progress:35, sessions:3,  streak:5,  coins:85,  grad:'linear-gradient(135deg,#FFB800,#FF4500)', lastSeen:'Yesterday' },
+  { name:'Rohan Verma', avatar:'RV', goal:'Marathon prep',  progress:78, sessions:15, streak:21, coins:200, grad:'linear-gradient(135deg,#00E5A0,#38BFFF)', lastSeen:'Today' },
+  { name:'Priya Das',   avatar:'PD', goal:'Yoga & Flex',    progress:45, sessions:6,  streak:8,  coins:120, grad:'linear-gradient(135deg,#8B5CF6,#FF4500)', lastSeen:'2 days ago' },
+  { name:'Kiran Nair',  avatar:'KN', goal:'Post-baby fit',  progress:52, sessions:4,  streak:6,  coins:95,  grad:'linear-gradient(135deg,#FF4500,#FFB800)', lastSeen:'Today' },
+];
+
+// ── LEARNER LIST ─────────────────────────────────
+function renderLearnerList(list) {
+  document.getElementById('learners-list').innerHTML = list.map((l,i) => `
+    <div class="lr">
+      <div class="av av-lg" style="background:${l.grad}">${l.avatar}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:700;margin-bottom:3px">${l.name}</div>
+        <div style="font-size:.78rem;color:var(--txt-2);margin-bottom:8px">
+          🎯 ${l.goal} · 🔥 ${l.streak} days · ${l.sessions} sessions · Last: ${l.lastSeen}
+        </div>
+        <div style="max-width:280px">
+          <div class="fb" style="font-size:.72rem;color:var(--txt-3);margin-bottom:4px">
+            <span>Progress</span><span>${l.progress}%</span>
+          </div>
+          <div class="pbar"><div class="pfill" style="width:${l.progress}%"></div></div>
+        </div>
+      </div>
+      <div style="text-align:right;flex-shrink:0">
+        <div style="font-size:.72rem;color:var(--txt-3);margin-bottom:8px">🪙 ${l.coins} coins</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">
+          <button class="btn btn-mint btn-sm" onclick="nav('messages',null)">💬 Chat</button>
+          <button class="btn btn-outline btn-sm" onclick="openLearnerDetail(${i})">View Progress</button>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function searchLearners(q) {
+  renderLearnerList(MY_LEARNERS.filter(l =>
+    l.name.toLowerCase().includes(q.toLowerCase()) ||
+    l.goal.toLowerCase().includes(q.toLowerCase())
+  ));
+}
+
+function openLearnerDetail(i) {
+  const l = MY_LEARNERS[i];
+  document.getElementById('ld-title').textContent = l.name + ' — Progress';
+  document.getElementById('ld-body').innerHTML = `
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:18px">
+      <div class="av av-lg" style="background:${l.grad}">${l.avatar}</div>
+      <div>
+        <div style="font-family:var(--fd);font-size:1.1rem;font-weight:700">${l.name}</div>
+        <div style="font-size:.82rem;color:var(--txt-2)">🎯 ${l.goal} · ${l.sessions} sessions · ${l.streak} day streak</div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px">
+      <div style="padding:12px;background:var(--ink-3);border-radius:var(--r-md);text-align:center">
+        <div style="font-family:var(--fd);font-size:1.6rem;font-weight:700;color:var(--mint)">${l.progress}%</div>
+        <div style="font-size:.72rem;color:var(--txt-3)">Goal Progress</div>
+      </div>
+      <div style="padding:12px;background:var(--ink-3);border-radius:var(--r-md);text-align:center">
+        <div style="font-family:var(--fd);font-size:1.6rem;font-weight:700;color:var(--brand)">${l.streak}🔥</div>
+        <div style="font-size:.72rem;color:var(--txt-3)">Day Streak</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-mint btn-sm" onclick="Modal.close('learner-detail-modal');nav('messages',null)">💬 Message</button>
+      <button class="btn btn-outline btn-sm" onclick="Modal.close('learner-detail-modal');nav('attendance',null)">✅ Attendance</button>
+      <button class="btn btn-outline btn-sm" onclick="Modal.close('learner-detail-modal');nav('uploads',null)">📤 Send Plan</button>
+    </div>`;
+  Modal.open('learner-detail-modal');
+}
+
+renderLearnerList(MY_LEARNERS);
+
+// Overview progress bars
+document.getElementById('ov-progress').innerHTML = MY_LEARNERS.map(l => `
+  <div class="lp">
+    <div class="lp-name">${l.name.split(' ')[0]}</div>
+    <div class="lp-bar"><div class="lp-fill" style="width:${l.progress}%"></div></div>
+    <div style="font-size:.72rem;font-weight:700;color:var(--mint);min-width:36px;text-align:right">${l.progress}%</div>
+  </div>`).join('');
+
+// ── PENDING BOOKINGS ─────────────────────────────
+const PENDING_BK = [
+  { name:'Amit Kumar',  avatar:'AK', type:'HIIT Session',      date:'Mar 16 · 7:00 AM',  mode:'Online',     grad:'linear-gradient(135deg,#38BFFF,#8B5CF6)', status:'pending' },
+  { name:'Sneha Roy',   avatar:'SR', type:'Strength Training', date:'Mar 17 · 6:00 PM',  mode:'Home Visit', grad:'linear-gradient(135deg,#FFB800,#FF4500)', status:'pending' },
+  { name:'Rohan Verma', avatar:'RV', type:'HIIT Session',      date:'Mar 18 · 6:30 AM',  mode:'Online',     grad:'linear-gradient(135deg,#00E5A0,#38BFFF)', status:'pending' },
+];
+
+let acceptedIds = new Set();
+
+function renderPending(containerId) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  const list = PENDING_BK.filter((_,i) => !acceptedIds.has(i));
+  el.innerHTML = list.length ? list.map((b,origIdx) => {
+    const i = PENDING_BK.indexOf(b);
+    return `
+    <div class="breq" id="breq-${i}">
+      <div class="av av-md" style="background:${b.grad}">${b.avatar}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:700;font-size:.875rem;margin-bottom:2px">${b.name}</div>
+        <div style="font-size:.78rem;color:var(--txt-2)">${b.type} · ${b.date} · ${b.mode}</div>
+      </div>
+      <div style="display:flex;gap:6px;flex-shrink:0;flex-wrap:wrap">
+        <button class="btn btn-mint btn-sm" onclick="acceptBooking(${i},'${b.name}','${b.type}')">✓ Accept</button>
+        <button class="btn btn-ghost btn-sm" style="color:var(--brand)" onclick="declineBooking(${i},'${b.name}')">✕</button>
+      </div>
+    </div>`;
+  }).join('') : '<div style="text-align:center;padding:20px;color:var(--txt-3)">No pending requests</div>';
+}
+renderPending('pending-list');
+
+function renderAllBookings(filter='pending') {
+  const all = [
+    ...PENDING_BK,
+    { name:'Amit Kumar',  avatar:'AK', type:'HIIT Session',     date:'Mar 12 · 7:00 AM',  mode:'Online', grad:'linear-gradient(135deg,#38BFFF,#8B5CF6)', status:'completed' },
+    { name:'Sneha Roy',   avatar:'SR', type:'Strength Training',date:'Mar 10 · 6:00 PM',  mode:'Online', grad:'linear-gradient(135deg,#FFB800,#FF4500)', status:'completed' },
+  ];
+  const list = all.filter(b => b.status===filter);
+  document.getElementById('all-bookings').innerHTML = list.length ? list.map((b,i) => `
+    <div class="breq">
+      <div class="av av-md" style="background:${b.grad}">${b.avatar}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:700">${b.name} — ${b.type}</div>
+        <div style="font-size:.8rem;color:var(--txt-2)">${b.date} · ${b.mode}</div>
+      </div>
+      <span class="badge ${b.status==='pending'?'b-gold':b.status==='completed'?'b-sky':'b-wire'}">${b.status.charAt(0).toUpperCase()+b.status.slice(1)}</span>
+      ${b.status==='pending' ? `<button class="btn btn-mint btn-sm" onclick="acceptBooking(${i},'${b.name}','${b.type}')">✓ Accept</button><button class="btn btn-ghost btn-sm" style="color:var(--brand)" onclick="declineBooking(${i},'${b.name}')">✕ Decline</button>` : ''}
+    </div>`).join('')
+    : `<div style="text-align:center;padding:40px;color:var(--txt-3)">No ${filter} bookings</div>`;
+}
+
+function filterBk(type, btn) {
+  document.querySelectorAll('#bk-tabs .btn').forEach(b => b.className='btn btn-outline btn-sm');
+  btn.className='btn btn-fire btn-sm';
+  renderAllBookings(type);
+}
+renderAllBookings('pending');
+
+async function acceptBooking(i, name, type) {
+  acceptedIds.add(i);
+  const el = document.getElementById('breq-'+i);
+  if (el) { el.style.opacity='.4'; el.style.transform='scale(.97)'; setTimeout(()=>el.remove(),500); }
+
+  // Create Zoom meeting
+  const session = PENDING_BK[i];
+  const meeting = await Zoom.createMeeting({ topic: `FitPro — ${type} with ${name}`, startTime: new Date().toISOString(), durationMins: 60 });
+
+  Toast.show(`✓ ${name}'s booking accepted! Zoom link sent 📧`, 'success');
+  Notifications._inApp('booking_confirmed', { learnerName: name, trainerName: 'Arjun Sharma' });
+
+  // Update DB
+  DB.updateBookingStatus('demo_bk_'+i, 'confirmed', { zoom_link: meeting.joinUrl, zoom_password: meeting.password });
+  renderPending('pending-list');
+}
+
+function declineBooking(i, name) {
+  const el = document.getElementById('breq-'+i);
+  if (el) { el.style.opacity='.4'; setTimeout(()=>el.remove(),500); }
+  Toast.show(`${name}'s booking declined`, 'info');
+}
+
+// ── CALENDAR ─────────────────────────────────────
+function renderTrainerCal() {
+  const sessions=[5,8,12,14,16,19,22,26], today=14;
+  const el = document.getElementById('trainer-cal'); if(!el) return;
+  el.innerHTML = `<div class="cal-day empty"></div><div class="cal-day empty"></div><div class="cal-day empty"></div>`
+    + Array.from({length:31},(_,i)=>{
+      const d=i+1;
+      return `<div class="cal-day ${d===today?'today':sessions.includes(d)?'sess':''}" onclick="Toast.show('${sessions.includes(d)?d+' Mar — Session booked':'Mar '+d+' — No session'}','info')">${d}</div>`;
+    }).join('');
+}
+
+function saveAvailability() {
+  const date  = document.getElementById('avail-date').value;
+  const slots = document.getElementById('avail-slots').value.trim();
+  if (!date)  { Toast.show('Please select a date', 'error'); return; }
+  if (!slots) { Toast.show('Please enter available time slots', 'error'); return; }
+  Toast.show(`Availability saved for ${date}: ${slots}`, 'success');
+  DB.updateTrainerProfile('demo_trainer', { availability: { date, slots } });
+}
+
+// ── ATTENDANCE ────────────────────────────────────
+let attData = Array.from({length:31}, (_,i) => i<14 ? (Math.random()>.2?'present':'absent') : '');
+function renderAtt() {
+  const el = document.getElementById('att-grid'); if(!el) return;
+  el.innerHTML = `<div style="aspect-ratio:1;opacity:0"></div>`.repeat(3)
+    + attData.map((s,i) => `
+      <div class="att-cell ${s}" onclick="toggleAtt(${i})">
+        ${s==='present'?'✓':s==='absent'?'✕':i+1}
+      </div>`).join('');
+  const p=attData.filter(s=>s==='present').length, a=attData.filter(s=>s==='absent').length;
+  document.getElementById('att-p').textContent = p;
+  document.getElementById('att-a').textContent = a;
+  const rate = p+a>0 ? Math.round(p/(p+a)*100)+'%' : '—';
+  document.getElementById('att-r').textContent = rate;
+  document.getElementById('att-rate-badge').textContent = rate + ' attendance';
+  // Save to DB
+  DB.markAttendance('demo_session','demo_learner', p>(p+a)/2);
+}
+function toggleAtt(i) {
+  if (!attData[i]) return;
+  attData[i] = attData[i]==='present' ? 'absent' : 'present';
+  renderAtt();
+}
+
+// ── WORKOUT BUILDER ───────────────────────────────
+const DEFAULT_EXERCISES = [
+  { name:'Bench Press',   sets:'4', reps:'10', rest:'90s' },
+  { name:'Incline Dumbbell',sets:'3',reps:'12',rest:'60s' },
+  { name:'Cable Fly',     sets:'3', reps:'15', rest:'60s' },
+];
+let exercises = [...DEFAULT_EXERCISES.map(e=>({...e}))];
+
+function renderExRows() {
+  document.getElementById('exercise-rows').innerHTML = exercises.map((ex,i) => `
+    <div class="ex-row">
+      <input class="input" value="${ex.name}" placeholder="Exercise name" oninput="exercises[${i}].name=this.value" style="font-size:.82rem;padding:8px 10px">
+      <input class="input" value="${ex.sets}" placeholder="Sets" oninput="exercises[${i}].sets=this.value" style="font-size:.82rem;padding:8px 10px">
+      <input class="input" value="${ex.reps}" placeholder="Reps" oninput="exercises[${i}].reps=this.value" style="font-size:.82rem;padding:8px 10px">
+      <input class="input" value="${ex.rest}" placeholder="Rest" oninput="exercises[${i}].rest=this.value" style="font-size:.82rem;padding:8px 10px">
+      <button class="btn btn-ghost btn-icon" onclick="removeExRow(${i})" style="color:var(--brand);font-size:1rem">✕</button>
+    </div>`).join('');
+}
+function addExRow() {
+  exercises.push({ name:'', sets:'3', reps:'12', rest:'60s' });
+  renderExRows();
+}
+function removeExRow(i) {
+  if (exercises.length <= 1) { Toast.show('Plan needs at least 1 exercise', 'error'); return; }
+  exercises.splice(i, 1);
+  renderExRows();
+}
+async function saveWorkoutPlan() {
+  const title   = document.getElementById('plan-title').value.trim();
+  const learner = document.getElementById('workout-learner').value;
+  if (!title) { Toast.show('Enter a plan title', 'error'); return; }
+  const filled = exercises.filter(e => e.name.trim());
+  if (!filled.length) { Toast.show('Add at least 1 exercise', 'error'); return; }
+  await DB.uploadWorkoutPlan('demo_trainer', 'demo_learner', { title, exercises: filled });
+  Toast.show(`✓ "${title}" sent to ${learner}! 💪`, 'success');
+}
+renderExRows();
+
+// Diet builder
+const DIET_ROWS = [
+  { time:'Breakfast', meal:'Oats + 4 eggs + banana', kcal:'550', prot:'38g' },
+  { time:'Lunch',     meal:'Brown rice + chicken',   kcal:'720', prot:'52g' },
+  { time:'Dinner',    meal:'Fish + vegetables',      kcal:'480', prot:'38g' },
+];
+document.getElementById('diet-builder').innerHTML = DIET_ROWS.map(d => `
+  <div style="display:grid;grid-template-columns:80px 1fr 60px auto;gap:7px;align-items:center">
+    <input class="input" value="${d.time}" style="font-size:.78rem;padding:7px 8px" placeholder="Meal">
+    <input class="input" value="${d.meal}" style="font-size:.78rem;padding:7px 8px" placeholder="Food items">
+    <input class="input" value="${d.kcal}" style="font-size:.78rem;padding:7px 8px" placeholder="kcal">
+    <span style="font-size:.72rem;color:var(--mint)">${d.prot}</span>
+  </div>`).join('');
+
+function saveDietPlan() {
+  const learner = document.querySelector('#diet-builder').closest('.card').querySelector('select')?.value || 'learner';
+  Toast.show(`Diet plan sent to ${learner}! 🥗`, 'success');
+}
+
+// ── FILE UPLOADS ──────────────────────────────────
+const LIB = [
+  { icon:'🎥', name:'HIIT Cardio — Week 3',     size:'48 MB', type:'video' },
+  { icon:'📄', name:'Lean Bulk Diet Guide.pdf', size:'2.1 MB', type:'pdf'  },
+  { icon:'🖼️', name:'Exercise Form Photos',    size:'12 MB', type:'image' },
+];
+function renderLib() {
+  document.getElementById('lib-list').innerHTML = LIB.map(f => `
+    <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--wire)">
+      <div style="width:36px;height:36px;background:var(--ink-3);border-radius:var(--r-sm);display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0">${f.icon}</div>
+      <div style="flex:1"><div style="font-size:.875rem;font-weight:600">${f.name}</div><div style="font-size:.72rem;color:var(--txt-3)">${f.size}</div></div>
+      <button class="btn btn-ghost btn-xs" onclick="Toast.show('Sharing ${f.name}…','info')">Share</button>
+      <button class="btn btn-ghost btn-xs" style="color:var(--brand)" onclick="this.closest('div').closest('div').remove();Toast.show('Deleted','info')">✕</button>
+    </div>`).join('');
+}
+renderLib();
+
+function triggerUpload() { document.getElementById('file-input').click(); }
+function handleFiles(files) {
+  if (!files.length) return;
+  const q = document.getElementById('upload-queue');
+  Array.from(files).forEach(file => {
+    const div = document.createElement('div');
+    div.className = 'upload-item';
+    div.innerHTML = `<div style="font-size:1rem">${file.type.includes('video')?'🎥':file.type.includes('pdf')?'📄':'🖼️'}</div><div style="flex:1"><div style="font-size:.82rem;font-weight:600;margin-bottom:5px">${file.name}</div><div class="up-bar"><div class="up-fill" id="uf-${file.name.replace(/\s/g,'_')}" style="width:0%"></div></div></div><div style="font-size:.72rem;color:var(--txt-3);flex-shrink:0">${(file.size/1024/1024).toFixed(1)} MB</div>`;
+    q.appendChild(div);
+    // Simulate upload
+    let pct = 0;
+    const fill = div.querySelector('.up-fill');
+    const interval = setInterval(() => {
+      pct += Math.random()*15+5;
+      fill.style.width = Math.min(pct,100)+'%';
+      if (pct>=100) {
+        clearInterval(interval);
+        div.querySelector('.up-fill').style.background='var(--mint)';
+        Toast.show(`"${file.name}" uploaded!`,'success');
+        // Add to library
+        LIB.unshift({icon:file.type.includes('video')?'🎥':file.type.includes('pdf')?'📄':'🖼️',name:file.name,size:(file.size/1024/1024).toFixed(1)+' MB',type:file.type.includes('video')?'video':'pdf'});
+        renderLib();
+        // Save to Supabase Storage
+        Storage.uploadFile('trainer-files', file.name, file);
+      }
+    },200);
+  });
+}
+
+// ── MESSAGES ─────────────────────────────────────
+const CHATS = {
+  amit:  { name:'Amit Kumar',  av:'AK', grad:'linear-gradient(135deg,#38BFFF,#8B5CF6)', status:'● Online',
+    msgs:[{in:true,text:'Good morning sir! Ready for today\'s session 🔥',time:'7:00 AM'},{in:false,text:'Perfect! Join Zoom in 5. Focus on form today.',time:'7:01 AM'},{in:true,text:'That was intense! Best session yet 💪',time:'8:06 AM'},{in:false,text:'Great effort! Protein within 30 mins. Rest well 🥗',time:'8:08 AM'}]},
+  sneha: { name:'Sneha Roy',   av:'SR', grad:'linear-gradient(135deg,#FFB800,#FF4500)', status:'● Away',
+    msgs:[{in:true,text:'Hi sir, can we reschedule Thursday to Friday?',time:'11:30 AM'},{in:false,text:'Sure Sneha, Friday 6PM works. I\'ll update the booking.',time:'12:00 PM'}]},
+  rohan: { name:'Rohan Verma', av:'RV', grad:'linear-gradient(135deg,#00E5A0,#38BFFF)', status:'● Online',
+    msgs:[{in:true,text:'PR on deadlift today!! 142kg!! 🏆🏆',time:'6:45 AM'},{in:false,text:'BEAST MODE! 🔥 That\'s 12kg more than last month. Incredible progress Rohan!',time:'7:00 AM'},{in:true,text:'Couldn\'t have done it without your programming. Thank you sir!',time:'7:02 AM'}]},
+};
+
+function openChat(who, el) {
+  document.querySelectorAll('.msg-item').forEach(m=>m.classList.remove('on'));
+  if(el) el.classList.add('on');
+  const data=CHATS[who]; if(!data) return;
+  document.getElementById('chat-av').textContent      = data.av;
+  document.getElementById('chat-av').style.background = data.grad;
+  document.getElementById('chat-name').textContent    = data.name;
+  document.getElementById('chat-status').textContent  = data.status;
+  const body=document.getElementById('msg-body');
+  body.innerHTML=`<div style="align-self:center;font-size:.72rem;color:var(--txt-3);padding:5px 14px;background:var(--ink-2);border-radius:var(--r-pill)">Today</div>`
+    +data.msgs.map(m=>m.in
+      ?`<div><div class="bbl bbl-in">${m.text}</div><div class="bbl-time" style="padding-left:4px">${m.time}</div></div>`
+      :`<div style="align-self:flex-end;display:flex;flex-direction:column;align-items:flex-end"><div class="bbl bbl-out">${m.text}</div><div class="bbl-time" style="padding-right:4px">${m.time}</div></div>`
+    ).join('');
+  body.scrollTop=body.scrollHeight;
+  document.getElementById('msg-input').placeholder=`Message ${data.name.split(' ')[0]}…`;
+}
+
+function sendMsg() {
+  const input=document.getElementById('msg-input');
+  const text=input.value.trim(); if(!text) return;
+  const body=document.getElementById('msg-body');
+  const now=new Date().toLocaleTimeString('en',{hour:'2-digit',minute:'2-digit'});
+  const div=document.createElement('div');
+  div.style.cssText='align-self:flex-end;display:flex;flex-direction:column;align-items:flex-end';
+  div.innerHTML=`<div class="bbl bbl-out">${text}</div><div class="bbl-time" style="padding-right:4px">${now}</div>`;
+  body.appendChild(div);
+  input.value=''; body.scrollTop=body.scrollHeight;
+  setTimeout(()=>{
+    const rep=document.createElement('div');
+    const replies=['Got it, thanks coach!','Will do! 💪','Yes sir!','Understood!','Thank you!'];
+    rep.innerHTML=`<div class="bbl bbl-in">${replies[Math.floor(Math.random()*replies.length)]}</div><div class="bbl-time" style="padding-left:4px">${now}</div>`;
+    body.appendChild(rep); body.scrollTop=body.scrollHeight;
+  },1200);
+  // Save to Supabase
+  DB.sendMessage('trainer_arjun', 'demo_learner', text);
+}
+
+// ── WALLET ────────────────────────────────────────
+const TRAINER_TXS=[
+  {icon:'💳',label:'Coin Recharge',              date:'Mar 10', amount:'+300',up:true },
+  {icon:'👤',label:'Contacted — Kiran Nair',     date:'Mar 9',  amount:'-20', up:false},
+  {icon:'💳',label:'Coin Recharge',              date:'Mar 3',  amount:'+300',up:true },
+  {icon:'👤',label:'Contacted — Priya Das',      date:'Mar 1',  amount:'-20', up:false},
+];
+document.getElementById('wallet-tx').innerHTML=TRAINER_TXS.map(t=>`
+  <div style="display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--wire)">
+    <div style="width:36px;height:36px;border-radius:var(--r-sm);background:var(--ink-3);display:flex;align-items:center;justify-content:center;flex-shrink:0">${t.icon}</div>
+    <div style="flex:1"><div style="font-size:.875rem;font-weight:600">${t.label}</div><div style="font-size:.72rem;color:var(--txt-3)">${t.date}</div></div>
+    <div style="font-weight:700;font-size:.9rem;color:${t.up?'var(--mint)':'var(--brand)'}">${t.amount} 🪙</div>
+  </div>`).join('');
+
+function buyTrainerCoins(amount, coins) {
+  demoPayment(amount, `${coins} Trainer Coins`, () => {
+    Toast.show(`${coins} coins added to trainer wallet! 🪙`, 'success');
+    DB.addCoinTransaction('trainer_arjun', coins, 'credit', `Trainer recharge ${coins}`, null);
+  });
+}
+function rechargeTrainerCoins() { Modal.open('topup-modal') || buyTrainerCoins(999,300); }
+
+// ── CHARTS ────────────────────────────────────────
+function renderEarnChart() {
+  const c=document.getElementById('earn-canvas'); if(!c) return;
+  c.width=c.parentElement.offsetWidth;
+  drawChart(c,[14000,17000,15500,20000,18600,21000,19800,24000,22000,26000,23500,24000],'#00E5A0');
+}
+window.addEventListener('resize', renderEarnChart);
+
+// ── PROFILE SAVE ─────────────────────────────────
+function saveProfile() {
+  Toast.show('Profile updated!','success');
+  DB.updateTrainerProfile('trainer_arjun',{
+    specialty: document.getElementById('p-spec').value,
+    session_price: parseInt(document.getElementById('p-price').value),
+    city: document.getElementById('p-city').value,
+    about: document.getElementById('p-about').value,
+  });
+}
+</script>
+</body>
+</html>

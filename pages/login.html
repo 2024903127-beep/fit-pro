@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login — FitPro</title>
+<link rel="stylesheet" href="../assets/css/ds.css">
+<style>
+html, body { height: 100%; overflow: hidden; }
+body { display: flex; }
+
+/* ── LEFT PANEL ─────────────────────────── */
+.auth-left {
+  flex: 1; position: relative; display: none;
+  overflow: hidden; background: var(--ink-1);
+}
+@media(min-width:900px){ .auth-left { display: flex; flex-direction: column; } }
+#left-canvas { position: absolute; inset: 0; z-index: 0; }
+
+.al-content {
+  position: relative; z-index: 2;
+  display: flex; flex-direction: column;
+  justify-content: space-between;
+  padding: 40px; height: 100%;
+}
+.al-logo {
+  font-family: var(--fd); font-size: 1.4rem; font-weight: 800;
+  display: flex; align-items: center; gap: 10px; color: var(--txt-1);
+}
+.al-logo-m {
+  width: 36px; height: 36px; background: var(--brand);
+  border-radius: 9px; display: flex; align-items: center;
+  justify-content: center; font-size: 1.1rem;
+}
+.al-quote {
+  font-family: var(--fd);
+  font-size: clamp(2rem, 3.5vw, 3rem);
+  font-weight: 800; line-height: 1.0; letter-spacing: -0.01em;
+}
+.al-quote .q-fire { color: var(--brand); }
+.al-quote .q-out  { -webkit-text-stroke: 1px rgba(255,255,255,.22); color: transparent; }
+.al-stats { display: flex; gap: 28px; }
+.als-num  { font-family: var(--fd); font-size: 1.7rem; font-weight: 800; color: var(--brand); }
+.als-lbl  { font-size: .68rem; color: var(--txt-3); font-weight: 600; letter-spacing: .07em; text-transform: uppercase; }
+
+/* Floating trainer badges */
+.tb {
+  position: absolute; z-index: 3;
+  background: rgba(14,14,14,.78);
+  border: 1px solid var(--wire-md);
+  backdrop-filter: blur(16px);
+  border-radius: var(--r-lg);
+  padding: 12px 16px;
+  display: flex; align-items: center; gap: 10px;
+}
+.tb1 { top: 22%; right: 8%; animation: float 4s ease-in-out infinite; }
+.tb2 { top: 46%; right: 6%; animation: float 5s ease-in-out infinite 1.5s; }
+.tb3 { top: 70%; right: 9%; animation: float 3.5s ease-in-out infinite 0.8s; }
+.tb-name   { font-size: .82rem; font-weight: 700; }
+.tb-spec   { font-size: .68rem; color: var(--txt-3); }
+.tb-rating { font-size: .72rem; color: var(--gold); font-weight: 700; margin-top: 2px; }
+
+/* ── RIGHT PANEL ────────────────────────── */
+.auth-right {
+  width: 100%; max-width: 480px;
+  display: flex; align-items: center; justify-content: center;
+  padding: 24px; background: var(--ink);
+  border-left: 1px solid var(--wire);
+  overflow-y: auto;
+}
+@media(max-width:899px){ .auth-right { max-width: 100%; border-left: none; } }
+.aw { width: 100%; max-width: 380px; }
+
+/* Mobile logo */
+.mob-logo {
+  display: flex; align-items: center; gap: 8px;
+  font-family: var(--fd); font-size: 1.3rem; font-weight: 800;
+  margin-bottom: 36px;
+}
+@media(min-width:900px){ .mob-logo { display: none; } }
+.mob-logo-m {
+  width: 32px; height: 32px; background: var(--brand);
+  border-radius: 8px; display: flex; align-items: center;
+  justify-content: center; font-size: .9rem;
+}
+
+/* Role tabs */
+.rtabs { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-bottom: 28px; }
+.rtab {
+  padding: 12px 6px; border-radius: var(--r-md);
+  border: 1px solid var(--wire-md);
+  background: transparent; cursor: pointer; text-align: center;
+  transition: all var(--df); -webkit-tap-highlight-color: transparent;
+}
+.rtab:hover { border-color: var(--wire-hi); background: var(--wire); }
+.rtab.on    { border-color: var(--brand); background: var(--brand-dim); }
+.rtab-icon  { font-size: 1.4rem; display: block; margin-bottom: 4px; }
+.rtab-lbl   { font-size: .72rem; font-weight: 700; color: var(--txt-2); }
+.rtab.on .rtab-lbl { color: var(--brand); }
+
+/* Steps */
+.fstep    { display: none; flex-direction: column; gap: 16px; }
+.fstep.on { display: flex; }
+
+.auth-h   { font-family: var(--fd); font-size: 2.4rem; font-weight: 800; line-height: 1.05; margin-bottom: 6px; }
+.auth-sub { font-size: .875rem; color: var(--txt-2); }
+.auth-sub strong { color: var(--brand); }
+
+/* OTP */
+.otp-row { display: flex; gap: 8px; }
+.otp-box {
+  flex: 1; height: 58px; text-align: center;
+  font-size: 1.5rem; font-weight: 700;
+  font-family: var(--fd);
+  background: var(--ink-3); color: var(--txt-1);
+  border: 1px solid var(--wire-md); border-radius: var(--r-md);
+  outline: none;
+  transition: border-color var(--df), box-shadow var(--df);
+  caret-color: var(--brand);
+}
+.otp-box:focus { border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-dim); }
+
+.otp-hint { text-align: center; font-size: .78rem; color: var(--txt-3); }
+.otp-hint a { color: var(--brand); cursor: pointer; font-weight: 600; }
+
+/* Divider */
+.adiv {
+  display: flex; align-items: center; gap: 12px;
+  font-size: .75rem; color: var(--txt-3);
+}
+.adiv::before, .adiv::after { content: ''; flex: 1; height: 1px; background: var(--wire-md); }
+
+/* Switch link */
+.aswitch { text-align: center; font-size: .82rem; color: var(--txt-3); }
+.aswitch a { color: var(--brand); font-weight: 600; }
+
+/* Back button */
+.back-btn {
+  display: flex; align-items: center; gap: 6px;
+  font-size: .82rem; color: var(--txt-3);
+  background: none; border: none; cursor: pointer;
+  font-family: var(--fb); transition: color .2s; padding: 0;
+  width: fit-content;
+}
+.back-btn:hover { color: var(--txt-1); }
+
+/* Google button */
+.g-btn {
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  width: 100%; padding: 13px;
+  background: var(--ink-3); border: 1px solid var(--wire-md);
+  border-radius: var(--r-sm); cursor: pointer;
+  font-family: var(--fb); font-size: .875rem; font-weight: 600;
+  color: var(--txt-1); transition: all var(--df);
+}
+.g-btn:hover { background: var(--ink-4); border-color: var(--wire-hi); }
+
+/* Theme toggle */
+.theme-fab {
+  position: fixed; top: 20px; right: 20px;
+  width: 38px; height: 38px;
+  background: var(--ink-3); border: 1px solid var(--wire-md);
+  border-radius: var(--r-sm);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; font-size: 1rem; z-index: 300;
+  transition: all var(--df);
+}
+.theme-fab:hover { border-color: var(--wire-hi); }
+
+/* Loading spinner in button */
+.btn-loading { opacity: .7; pointer-events: none; }
+</style>
+</head>
+<body>
+
+<button class="theme-fab" onclick="Theme.toggle()" title="Toggle theme">🌙</button>
+
+<!-- ── LEFT PANEL ───────────────────────────────── -->
+<div class="auth-left">
+  <canvas id="left-canvas"></canvas>
+
+  <!-- Floating trainer cards -->
+  <div class="tb tb1">
+    <div class="av av-sm" style="background:linear-gradient(135deg,#FF4500,#FF6A35)">AS</div>
+    <div>
+      <div class="tb-name">Arjun Sharma</div>
+      <div class="tb-spec">Weight Loss · Delhi</div>
+      <div class="tb-rating">★ 4.9 · 128 reviews</div>
+    </div>
+  </div>
+  <div class="tb tb2">
+    <div class="av av-sm" style="background:linear-gradient(135deg,#38BFFF,#8B5CF6)">PM</div>
+    <div>
+      <div class="tb-name">Priya Mehta</div>
+      <div class="tb-spec">Yoga · Mumbai</div>
+      <div class="tb-rating">★ 4.8 · 95 reviews</div>
+    </div>
+  </div>
+  <div class="tb tb3">
+    <div class="av av-sm" style="background:linear-gradient(135deg,#00E5A0,#38BFFF)">RS</div>
+    <div>
+      <div class="tb-name">Rahul Singh</div>
+      <div class="tb-spec">Muscle Building · Bangalore</div>
+      <div class="tb-rating">★ 4.7 · 203 reviews</div>
+    </div>
+  </div>
+
+  <div class="al-content">
+    <a href="../index.html" class="al-logo">
+      <div class="al-logo-m">💪</div>FitPro
+    </a>
+    <div>
+      <div class="al-quote">
+        Your<br>
+        <span class="q-fire">strongest</span><br>
+        <span class="q-out">self awaits.</span>
+      </div>
+    </div>
+    <div class="al-stats">
+      <div><div class="als-num">5K+</div><div class="als-lbl">Learners</div></div>
+      <div><div class="als-num">350+</div><div class="als-lbl">Trainers</div></div>
+      <div><div class="als-num">98%</div><div class="als-lbl">Satisfaction</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── RIGHT PANEL ──────────────────────────────── -->
+<div class="auth-right">
+  <div class="aw">
+
+    <!-- Mobile logo -->
+    <div class="mob-logo">
+      <div class="mob-logo-m">💪</div>FitPro
+    </div>
+
+    <!-- Role tabs -->
+    <div class="rtabs" id="rtabs">
+      <button class="rtab" id="rt-trainer" onclick="setRole('trainer',this)">
+        <span class="rtab-icon">🏋️</span>
+        <span class="rtab-lbl">Trainer</span>
+      </button>
+      <button class="rtab on" id="rt-learner" onclick="setRole('learner',this)">
+        <span class="rtab-icon">🎯</span>
+        <span class="rtab-lbl">Learner</span>
+      </button>
+      <button class="rtab" id="rt-admin" onclick="setRole('admin',this)">
+        <span class="rtab-icon">👑</span>
+        <span class="rtab-lbl">Admin</span>
+      </button>
+    </div>
+
+    <!-- ── STEP 1: EMAIL ── -->
+    <div class="fstep on" id="step-email">
+      <div>
+        <h1 class="auth-h">Welcome<br>back.</h1>
+        <p class="auth-sub" style="margin-bottom:4px">Enter your email to receive a one-time login code</p>
+      </div>
+      <div class="ig">
+        <label>Email Address</label>
+        <input class="input" type="email" id="email-in"
+               placeholder="you@example.com"
+               autocomplete="email"
+               onkeydown="if(event.key==='Enter') sendOTP()">
+      </div>
+      <button class="btn btn-fire btn-full btn-lg" id="send-btn" onclick="sendOTP()">
+        Send OTP →
+      </button>
+      <div class="adiv">or continue with</div>
+      <button class="g-btn" onclick="googleLogin()">
+        <svg width="18" height="18" viewBox="0 0 24 24">
+          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+        </svg>
+        Continue with Google
+      </button>
+      <div class="aswitch">Don't have an account? <a href="register.html">Register free →</a></div>
+    </div>
+
+    <!-- ── STEP 2: OTP ── -->
+    <div class="fstep" id="step-otp">
+      <button class="back-btn" onclick="goBack()">← Back</button>
+      <div>
+        <h1 class="auth-h">Check your<br>email.</h1>
+        <p class="auth-sub" id="otp-hint">
+          6-digit code sent · Demo: use <strong>1 2 3 4 5 6</strong>
+        </p>
+      </div>
+      <div class="otp-row">
+        <input class="otp-box" maxlength="1" inputmode="numeric" id="otp-0">
+        <input class="otp-box" maxlength="1" inputmode="numeric" id="otp-1">
+        <input class="otp-box" maxlength="1" inputmode="numeric" id="otp-2">
+        <input class="otp-box" maxlength="1" inputmode="numeric" id="otp-3">
+        <input class="otp-box" maxlength="1" inputmode="numeric" id="otp-4">
+        <input class="otp-box" maxlength="1" inputmode="numeric" id="otp-5">
+      </div>
+      <div class="otp-hint">
+        Resend in <span id="timer-val">30</span>s ·
+        <a onclick="resendOTP()">Resend OTP</a>
+      </div>
+      <button class="btn btn-fire btn-full btn-lg" id="verify-btn" onclick="verifyOTP()">
+        Verify &amp; Login →
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast-wrap" id="toast-wrap"></div>
+
+<script src="../assets/js/core.js"></script>
+<script src="../assets/js/supabase.js"></script>
+<script>
+// ── LEFT CANVAS ──────────────────────────────────
+(function () {
+  const canvas = document.getElementById('left-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  let W, H, pts = [];
+
+  function resize() {
+    W = canvas.width  = canvas.parentElement.offsetWidth;
+    H = canvas.height = canvas.parentElement.offsetHeight;
+  }
+  function mkP() {
+    return {
+      x: Math.random()*W, y: Math.random()*H,
+      vx:(Math.random()-.5)*.35, vy:(Math.random()-.5)*.35,
+      r: Math.random()*1.5+.3,
+      a: Math.random()*.38+.06,
+      red: Math.random() > .87
+    };
+  }
+  function draw() {
+    ctx.clearRect(0,0,W,H);
+    for (let i=0; i<pts.length; i++) {
+      for (let j=i+1; j<pts.length; j++) {
+        const dx=pts[i].x-pts[j].x, dy=pts[i].y-pts[j].y, d=Math.sqrt(dx*dx+dy*dy);
+        if (d<120) {
+          ctx.beginPath(); ctx.moveTo(pts[i].x,pts[i].y); ctx.lineTo(pts[j].x,pts[j].y);
+          ctx.strokeStyle=`rgba(255,255,255,${.05*(1-d/120)})`; ctx.lineWidth=.5; ctx.stroke();
+        }
+      }
+    }
+    pts.forEach(p => {
+      p.x+=p.vx; p.y+=p.vy;
+      if(p.x<0)p.x=W; if(p.x>W)p.x=0; if(p.y<0)p.y=H; if(p.y>H)p.y=0;
+      ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+      ctx.fillStyle = p.red ? `rgba(255,69,0,${p.a})` : `rgba(255,255,255,${p.a})`;
+      ctx.fill();
+    });
+    requestAnimationFrame(draw);
+  }
+  resize();
+  pts = Array.from({length:65}, mkP);
+  draw();
+  window.addEventListener('resize', () => { resize(); pts=Array.from({length:65},mkP); }, {passive:true});
+})();
+
+// ── ROLE SELECTION ───────────────────────────────
+let role = 'learner';
+
+// Pre-select from URL param
+(function() {
+  const r = new URLSearchParams(location.search).get('role');
+  if (r && ['trainer','learner','admin'].includes(r)) {
+    role = r;
+    document.querySelectorAll('.rtab').forEach(t => t.classList.remove('on'));
+    const tab = document.getElementById('rt-'+r);
+    if (tab) tab.classList.add('on');
+  }
+})();
+
+function setRole(r, btn) {
+  role = r;
+  document.querySelectorAll('.rtab').forEach(t => t.classList.remove('on'));
+  btn.classList.add('on');
+}
+
+// ── OTP FLOW ─────────────────────────────────────
+let timerInterval;
+
+async function sendOTP() {
+  const email = document.getElementById('email-in').value.trim();
+  if (!email || !email.includes('@') || !email.includes('.')) {
+    Toast.show('Please enter a valid email address', 'error'); return;
+  }
+
+  const btn = document.getElementById('send-btn');
+  btn.classList.add('btn-loading');
+  btn.innerHTML = '<span class="spin"></span> Sending…';
+
+  // Call Supabase (demo-safe)
+  await Auth.sendOTP(email);
+
+  // Update hint with email
+  document.getElementById('otp-hint').innerHTML =
+    `Sent to <strong style="color:var(--txt-1)">${email}</strong> · Demo: use <strong style="color:var(--brand)">1 2 3 4 5 6</strong>`;
+
+  // Switch to OTP step
+  document.getElementById('step-email').classList.remove('on');
+  document.getElementById('step-otp').classList.add('on');
+  document.getElementById('otp-0').focus();
+
+  btn.classList.remove('btn-loading');
+  btn.innerHTML = 'Send OTP →';
+
+  startTimer(30);
+}
+
+function startTimer(secs) {
+  clearInterval(timerInterval);
+  const el = document.getElementById('timer-val');
+  el.textContent = secs;
+  timerInterval = setInterval(() => {
+    secs--;
+    el.textContent = secs;
+    if (secs <= 0) clearInterval(timerInterval);
+  }, 1000);
+}
+
+function resendOTP() {
+  Toast.show('OTP resent!', 'info');
+  startTimer(30);
+  for (let i=0; i<6; i++) document.getElementById('otp-'+i).value = '';
+  document.getElementById('otp-0').focus();
+}
+
+function goBack() {
+  document.getElementById('step-otp').classList.remove('on');
+  document.getElementById('step-email').classList.add('on');
+  clearInterval(timerInterval);
+}
+
+// ── OTP BOX KEYBOARD NAV ─────────────────────────
+for (let i = 0; i < 6; i++) {
+  const box = document.getElementById('otp-' + i);
+
+  box.addEventListener('input', () => {
+    const val = box.value.replace(/\D/g, '');
+    box.value = val.slice(-1);
+    if (val && i < 5) document.getElementById('otp-'+(i+1)).focus();
+    // Auto-verify when all 6 filled
+    const full = Array.from({length:6}, (_,j) => document.getElementById('otp-'+j).value).join('');
+    if (full.length === 6) setTimeout(verifyOTP, 180);
+  });
+
+  box.addEventListener('keydown', e => {
+    if (e.key === 'Backspace' && !box.value && i > 0) {
+      document.getElementById('otp-'+(i-1)).focus();
+    }
+    if (e.key === 'ArrowLeft'  && i > 0) document.getElementById('otp-'+(i-1)).focus();
+    if (e.key === 'ArrowRight' && i < 5) document.getElementById('otp-'+(i+1)).focus();
+  });
+
+  // Handle paste — e.g. paste "123456" into first box
+  box.addEventListener('paste', e => {
+    const text = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g,'').slice(0,6);
+    if (!text.length) return;
+    e.preventDefault();
+    text.split('').forEach((ch, j) => {
+      const b = document.getElementById('otp-'+j);
+      if (b) b.value = ch;
+    });
+    const lastIdx = Math.min(text.length, 5);
+    document.getElementById('otp-'+lastIdx).focus();
+    if (text.length === 6) setTimeout(verifyOTP, 180);
+  });
+}
+
+async function verifyOTP() {
+  const otp = Array.from({length:6}, (_,i) => document.getElementById('otp-'+i).value).join('');
+  if (otp.length < 6) { Toast.show('Enter all 6 digits', 'error'); return; }
+
+  const btn = document.getElementById('verify-btn');
+  btn.classList.add('btn-loading');
+  btn.innerHTML = '<span class="spin"></span> Verifying…';
+
+  const email = document.getElementById('email-in').value.trim();
+  const result = await Auth.verifyOTP(email, otp);
+
+  if (!result) {
+    btn.classList.remove('btn-loading');
+    btn.innerHTML = 'Verify &amp; Login →';
+    Toast.show('Invalid OTP. Try again.', 'error');
+    return;
+  }
+
+  Toast.show('Login successful! Redirecting…', 'success');
+
+  setTimeout(() => {
+    const dest = {
+      trainer: 'trainer-dashboard.html',
+      admin:   'admin-dashboard.html',
+      learner: 'learner-dashboard.html'
+    };
+    window.location.href = dest[role] || 'learner-dashboard.html';
+  }, 700);
+}
+
+function googleLogin() {
+  // Calls Supabase Google OAuth (demo-safe)
+  Auth.googleSignIn();
+  // Demo fallback after delay
+  setTimeout(() => {
+    const dest = role==='trainer' ? 'trainer-dashboard.html' : role==='admin' ? 'admin-dashboard.html' : 'learner-dashboard.html';
+    window.location.href = dest;
+  }, 1500);
+}
+</script>
+</body>
+</html>
